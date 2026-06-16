@@ -432,19 +432,29 @@ $('#gameFullscreen')?.addEventListener('click', () => {
   const req = gameFrame.requestFullscreen || gameFrame.webkitRequestFullscreen || gameFrame.msRequestFullscreen;
   if (req) req.call(gameFrame);
 });
-// The game only recalculates its canvas size on a `resize` event, so when it
-// lazy-loads inside the iframe it can latch onto a stale size. Re-fit it on
-// load and whenever the frame changes size (same-origin, so this is allowed).
+// The game sizes its canvas from its OWN iframe viewport, which is unreliable
+// while it lazy-loads during a smooth-scroll (it can latch onto a wrong size
+// and render zoomed/clipped until reload). Instead, measure the frame from the
+// parent (always correct) and set the canvas size directly. Re-apply on load,
+// when it scrolls into view, on resize, and with a few staggered retries to
+// override any late self-fit from the game.
 if (gameFrame) {
   const refit = () => {
     try {
-      const w = gameFrame.contentWindow;
-      if (w && typeof w.fit === 'function') w.fit();
-      else if (w) w.dispatchEvent(new Event('resize'));
+      const cv = gameFrame.contentDocument && gameFrame.contentDocument.querySelector('#game');
+      if (!cv) return;
+      const r = gameFrame.getBoundingClientRect();
+      if (!r.width || !r.height) return;
+      const s = Math.min(r.width / 960, r.height / 540) * 0.97;
+      cv.style.width = 960 * s + 'px';
+      cv.style.height = 540 * s + 'px';
     } catch (e) { /* ignore */ }
   };
-  gameFrame.addEventListener('load', () => { refit(); setTimeout(refit, 250); });
+  const refitSoon = () => { refit(); [120, 400, 900, 1500].forEach((d) => setTimeout(refit, d)); };
+  gameFrame.addEventListener('load', refitSoon);
+  window.addEventListener('resize', refit);
   if (window.ResizeObserver) new ResizeObserver(refit).observe(gameFrame);
+  new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) refitSoon(); }, { threshold: 0.25 }).observe(gameFrame);
 }
 
 /* =========================================================
