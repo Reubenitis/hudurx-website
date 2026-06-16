@@ -191,8 +191,8 @@ body.loaded .loader { opacity: 0; visibility: hidden; transition: opacity 0.7s, 
   padding-top: 12px; padding-bottom: 12px; border-bottom-color: var(--hair);
 }
 .brand-logo { display: block; width: auto; }
-.nav__logo .brand-logo { height: 38px; transition: height 0.4s var(--ease); }
-.nav.is-stuck .nav__logo .brand-logo { height: 31px; }
+.nav__logo .brand-logo { height: 91px; transition: height 0.4s var(--ease); }
+.nav.is-stuck .nav__logo .brand-logo { height: 72.8px; } /* scrolled: 20% smaller */
 .nav__links { display: flex; gap: 30px; }
 .nav__links a {
   font-family: var(--mono); font-size: 12.5px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted);
@@ -305,7 +305,10 @@ section { position: relative; padding-block: clamp(80px, 12vw, 160px); }
   font-family: var(--display); font-size: clamp(30px, 5vw, 64px); text-transform: uppercase; letter-spacing: 0.02em;
   color: transparent; -webkit-text-stroke: 1.4px rgba(236,230,245,0.6); white-space: nowrap; padding-right: 0.4em;
 }
-.marquee__track i { font-style: normal; color: var(--green); -webkit-text-stroke: 0; padding: 0 0.25em; }
+.marquee__track .bolt {
+  display: inline-block; height: 0.66em; width: auto; margin: 0 0.4em; vertical-align: middle;
+  position: relative; top: -0.05em; filter: drop-shadow(0 0 12px rgba(255, 210, 0, 0.55));
+}
 @keyframes marquee { to { transform: translateX(-50%); } }
 .marquee:hover .marquee__track { animation-play-state: paused; }
 
@@ -453,7 +456,7 @@ section { position: relative; padding-block: clamp(80px, 12vw, 160px); }
 .hudu__rings i:nth-child(2) { width: 78%; height: 78%; animation: spin 40s linear infinite reverse; border-color: rgba(110,255,61,0.25); }
 .hudu__rings i:nth-child(3) { width: 94%; height: 94%; animation: spin 60s linear infinite; border-style: dotted; }
 @keyframes spin { to { transform: rotate(360deg); } }
-.hudu__media img { position: relative; z-index: 2; width: 84%; filter: drop-shadow(0 24px 50px rgba(0,0,0,0.7)); animation: floaty 6s ease-in-out infinite; }
+.hudu__media img { position: relative; z-index: 2; width: 126%; max-width: none; filter: drop-shadow(0 24px 50px rgba(0,0,0,0.7)); animation: floaty 6s ease-in-out infinite; } /* 84% × 1.5 */
 .hudu__sigils { position: absolute; bottom: 4%; z-index: 3; font-family: var(--mono); letter-spacing: 0.5em; color: var(--green); opacity: 0.7; font-size: 18px; }
 
 .hudu__copy .tag { color: var(--green); }
