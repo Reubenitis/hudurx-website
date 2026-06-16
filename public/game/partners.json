@@ -1,0 +1,6 @@
+{
+  "_howto": "Add a VIP/partner: copy a block in 'vips'. sprite = path to a transparent PNG in assets/ (supply it ~170-340px tall). accent = brand hex color (glow + name tag + freed splash). intro = the line shown when they're freed. name caps at 18 chars. Freed VIPs cycle through this list. If this file is missing or blocked, the game uses a built-in default VIP so it never breaks.",
+  "vips": [
+    { "name": "LSU TIGER", "accent": "#fdd023", "intro": "KEEP HIM LIT!", "sprite": "assets/lsu_tiger.png" }
+  ]
+}

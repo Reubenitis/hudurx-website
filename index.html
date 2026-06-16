@@ -16,7 +16,7 @@
       content="Direct-to-mouth high-voltage caffeine. Prescribed by Doc Hudu. Zero sugar, zero crash, all thunder."
     />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://reubenitis.github.io/hudurx-website/img/thunderstix-packs.png" />
+    <meta property="og:image" content="https://reubenitis.github.io/hudurx-website/img/og-cover.jpg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -57,6 +57,7 @@
         <a href="#ritual" data-link>The Ritual</a>
         <a href="#flavors" data-link>Flavors</a>
         <a href="#hudu" data-link>Doc Hudu</a>
+        <a href="#gaming" data-link>Hudu Gaming</a>
         <a href="#shop" data-link>Shop</a>
       </nav>
       <a href="#shop" class="btn btn--nav" data-magnetic>
@@ -69,9 +70,7 @@
     <main id="top">
       <!-- ===== HERO ===== -->
       <section class="hero" id="hero">
-        <video class="hero__video" autoplay muted loop playsinline poster="./img/thunderstix-packs.png">
-          <source src="./video/thunderstix.mp4" type="video/mp4" />
-        </video>
+        <img class="hero__video" src="./img/hero-doc.webp" alt="" aria-hidden="true" />
         <div class="hero__video-tint"></div>
         <canvas class="bolts" id="bolts" aria-hidden="true"></canvas>
 
@@ -97,10 +96,6 @@
               <span>Summon a Box</span>
               <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </a>
-            <button class="btn btn--ghost" id="playRitual" data-magnetic>
-              <span class="btn__play"><svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><path d="M6 4l14 8-14 8z" fill="currentColor"/></svg></span>
-              <span>Watch the Ritual</span>
-            </button>
           </div>
 
           <ul class="hero__stats reveal-up">
@@ -147,7 +142,7 @@
         <div class="product__grid">
           <div class="product__media" data-parallax-wrap>
             <div class="product__glow"></div>
-            <img src="./img/thunder-scoops.png" alt="HuduRX ThunderStix tubs — gold and green lid" data-parallax="40" />
+            <img src="./img/thunder-scoops.webp" alt="HuduRX ThunderStix tubs — gold and green lid" data-parallax="40" />
             <div class="product__badge product__badge--a">21 Sticks / Box</div>
             <div class="product__badge product__badge--b">Tear &amp; Pour</div>
           </div>
@@ -226,7 +221,7 @@
         <div class="flavors__stage">
           <div class="flavors__display">
             <div class="flavors__halo"></div>
-            <img src="./img/thunderstix-packs.png" alt="ThunderStix flavor lineup" class="flavors__img" id="flavorImg" />
+            <img src="./img/thunderstix-packs.webp" alt="ThunderStix flavor lineup" class="flavors__img" id="flavorImg" />
             <div class="flavors__voltage"><span>Voltage</span><b id="flavorVolt">High</b></div>
           </div>
 
@@ -261,7 +256,7 @@
           <div class="hudu__media">
             <div class="hudu__altar"></div>
             <div class="hudu__rings" aria-hidden="true"><i></i><i></i><i></i></div>
-            <img src="./img/doc-hudu.png" alt="Doc Hudu, the voodoo physician mascot of HuduRX" id="huduImg" data-parallax="60" />
+            <img src="./img/doc-hudu.webp" alt="Doc Hudu, the voodoo physician mascot of HuduRX" id="huduImg" data-parallax="60" />
             <div class="hudu__sigils" aria-hidden="true">✦ ✕ ✦ ✕ ✦</div>
           </div>
 
@@ -288,10 +283,44 @@
         </div>
       </section>
 
+      <!-- ===== HUDU GAMING ===== -->
+      <section class="gaming" id="gaming">
+        <div class="section-head section-head--center">
+          <span class="tag reveal-up">// 05 — Hudu Gaming</span>
+          <h2 class="section-title"><span data-reveal>Fight</span> <span data-reveal><em>the&nbsp;Z's.</em></span></h2>
+          <p class="section-sub reveal-up">Play as Doc Hudu and zap waves of drowsy Z's with caduceus lightning. Grab a ThunderStix for instant energy and a screen-clearing Thunder Mode. Right here — no download.</p>
+        </div>
+
+        <div class="gaming__stage reveal-up">
+          <div class="gaming__cabinet">
+            <div class="gaming__screen">
+              <iframe
+                class="gaming__frame"
+                id="gameFrame"
+                src="./game/index.html"
+                title="HuduRX — Fight the Z's"
+                loading="lazy"
+                allow="autoplay; fullscreen"
+                allowfullscreen
+              ></iframe>
+            </div>
+            <div class="gaming__bar">
+              <div class="gaming__hint">
+                <span class="pulse-dot"></span> WASD / arrows to move · mouse or Space to zap · grab a ThunderStix to go nuclear
+              </div>
+              <button class="btn btn--ghost gaming__fs" id="gameFullscreen" data-magnetic>
+                <span>Play Fullscreen</span>
+                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- ===== BUILT FOR THE GRIND ===== -->
       <section class="grind" id="grind">
         <div class="section-head section-head--center">
-          <span class="tag reveal-up">// 05 — Built For The Grind</span>
+          <span class="tag reveal-up">// 06 — Built For The Grind</span>
           <h2 class="section-title"><span data-reveal>Engineered for</span> <span data-reveal><em>overtime.</em></span></h2>
           <p class="section-sub reveal-up">Ranked ladders. All-nighters. Double sessions at the rack. ThunderStix was tuned for the people who don't clock out.</p>
         </div>
@@ -345,7 +374,7 @@
       <!-- ===== COMMUNITY ===== -->
       <section class="army" id="army">
         <div class="army__inner">
-          <span class="tag reveal-up">// 06 — The Hudu Army</span>
+          <span class="tag reveal-up">// 07 — The Hudu Army</span>
           <h2 class="army__title"><span data-reveal>Join&nbsp;the</span> <span data-reveal><em>cult&nbsp;of&nbsp;thunder.</em></span></h2>
           <div class="army__stats">
             <div class="reveal-up"><b><span data-count="148">0</span>k</b><span>in the ranks</span></div>
@@ -364,7 +393,7 @@
       <!-- ===== SHOP ===== -->
       <section class="shop" id="shop">
         <div class="section-head section-head--center">
-          <span class="tag reveal-up">// 07 — Summon Your Supply</span>
+          <span class="tag reveal-up">// 08 — Summon Your Supply</span>
           <h2 class="section-title"><span data-reveal>Get</span> <span data-reveal><em>prescribed.</em></span></h2>
           <p class="section-sub reveal-up">Free shipping over $40. Cancel a subscription anytime — the Doc won't take it personally.</p>
         </div>
@@ -425,6 +454,7 @@
           <a href="#product" data-link>ThunderStix</a>
           <a href="#flavors" data-link>Flavors</a>
           <a href="#ritual" data-link>The Ritual</a>
+          <a href="#gaming" data-link>Hudu Gaming</a>
           <a href="#shop" data-link>Shop</a>
         </nav>
         <nav class="footer__nav" aria-label="Company">
@@ -447,17 +477,7 @@
       </div>
     </footer>
 
-    <!-- ===== RITUAL VIDEO MODAL ===== -->
-    <div class="modal" id="modal" aria-hidden="true">
-      <button class="modal__close" id="modalClose" aria-label="Close">✕</button>
-      <div class="modal__frame">
-        <video id="modalVideo" controls playsinline>
-          <source src="./video/thunderstix.mp4" type="video/mp4" />
-        </video>
-      </div>
-    </div>
-
-    <!-- ===== CART TOAST ===== -->
+<!-- ===== CART TOAST ===== -->
     <div class="toast" id="toast" aria-live="polite"></div>
 
     <script type="module" src="/src/main.js"></script>

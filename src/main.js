@@ -277,6 +277,7 @@ function bolts() {
   let w, h, dpr;
   let sparks = [];
   let strikes = [];
+  let running = true;
 
   const seed = () => {
     const count = Math.min(170, Math.max(40, Math.round((w * h) / (15000 * dpr * dpr))));
@@ -338,9 +339,16 @@ function bolts() {
       ctx.globalAlpha = 1; ctx.shadowBlur = 0;
     });
     strikes = strikes.filter((s) => s.life > 0);
-    requestAnimationFrame(draw);
+    if (running) requestAnimationFrame(draw);
   };
   requestAnimationFrame(draw);
+
+  // Stop drawing while the hero is off-screen — saves continuous CPU/GPU
+  const heroEl = canvas.closest('section') || canvas;
+  new IntersectionObserver(([e]) => {
+    if (e.isIntersecting && !running) { running = true; requestAnimationFrame(draw); }
+    else if (!e.isIntersecting) { running = false; }
+  }, { threshold: 0 }).observe(heroEl);
 }
 
 /* =========================================================
@@ -393,18 +401,6 @@ function setFlavor(key) {
 $$('.fchip').forEach((c) => c.addEventListener('click', () => setFlavor(c.dataset.flavorPick)));
 
 /* =========================================================
-   RITUAL VIDEO MODAL
-   ========================================================= */
-const modal = $('#modal');
-const modalVideo = $('#modalVideo');
-function openModal() { modal.classList.add('is-open'); modal.setAttribute('aria-hidden', 'false'); lenis?.stop(); modalVideo.play().catch(() => {}); }
-function closeModal() { modal.classList.remove('is-open'); modal.setAttribute('aria-hidden', 'true'); lenis?.start(); modalVideo.pause(); }
-$('#playRitual')?.addEventListener('click', openModal);
-$('#modalClose')?.addEventListener('click', closeModal);
-modal?.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
-window.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
-
-/* =========================================================
    CART TOAST + ENLIST
    ========================================================= */
 const toast = $('#toast');
@@ -426,6 +422,30 @@ $('#enlistForm')?.addEventListener('submit', (e) => {
   $('#enlistDone').hidden = false;
   showToast('⚡ Enlisted in the Hudu Army');
 });
+
+/* =========================================================
+   GAME — embedded arcade (fullscreen + keep it scaled to its frame)
+   ========================================================= */
+const gameFrame = $('#gameFrame');
+$('#gameFullscreen')?.addEventListener('click', () => {
+  if (!gameFrame) return;
+  const req = gameFrame.requestFullscreen || gameFrame.webkitRequestFullscreen || gameFrame.msRequestFullscreen;
+  if (req) req.call(gameFrame);
+});
+// The game only recalculates its canvas size on a `resize` event, so when it
+// lazy-loads inside the iframe it can latch onto a stale size. Re-fit it on
+// load and whenever the frame changes size (same-origin, so this is allowed).
+if (gameFrame) {
+  const refit = () => {
+    try {
+      const w = gameFrame.contentWindow;
+      if (w && typeof w.fit === 'function') w.fit();
+      else if (w) w.dispatchEvent(new Event('resize'));
+    } catch (e) { /* ignore */ }
+  };
+  gameFrame.addEventListener('load', () => { refit(); setTimeout(refit, 250); });
+  if (window.ResizeObserver) new ResizeObserver(refit).observe(gameFrame);
+}
 
 /* =========================================================
    BOOT

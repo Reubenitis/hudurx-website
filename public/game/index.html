@@ -1,0 +1,2061 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>HuduRX · Fight the Z's · Powered by ThunderStix</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Archivo+Black&family=Montserrat:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --vudu-purple:#7c4dc4;
+    --vudu-purple-lt:#a07ae0;
+    --vudu-gold:#f2c12e;
+    --vudu-green:#5cb86a;
+    --vudu-ink:#17141c;
+    --vudu-char:#262130;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%;background:var(--vudu-ink);overflow:hidden;touch-action:none}
+  body{
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Montserrat',sans-serif;
+  }
+  #stage{position:relative;}
+  canvas{display:block;background:var(--vudu-ink);border-radius:10px;
+    box-shadow:0 0 60px rgba(124,77,196,.35), 0 0 120px rgba(0,0,0,.8);
+    cursor:crosshair;}
+  /* rides inside the corner on menus, slides below the canvas during play
+     so stray gameplay clicks can never toggle it */
+  #mute{
+    position:absolute;bottom:12px;right:12px;z-index:5;
+    background:rgba(24,16,38,.85);color:var(--vudu-gold);
+    border:2px solid var(--vudu-purple);border-radius:0;
+    font-family:'Archivo Black',sans-serif;font-size:12px;
+    padding:6px 14px;cursor:pointer;user-select:none;
+    transition:bottom .45s ease, right .45s ease, background .2s;
+  }
+  #mute:hover{background:var(--vudu-purple)}
+  #introgif{
+    position:absolute;left:0;top:0;width:100%;height:100%;
+    object-fit:contain;display:none;pointer-events:none;
+  }
+  .introtext{
+    position:absolute;left:0;right:0;text-align:center;
+    pointer-events:none;display:none;
+    text-shadow:3px 3px 0 #0d0b12, -2px -2px 0 #0d0b12, 2px -2px 0 #0d0b12, -2px 2px 0 #0d0b12;
+  }
+  #fightcta{
+    bottom:7%;font-family:'Bangers',cursive;font-size:46px;
+    color:var(--vudu-gold);letter-spacing:2px;
+    animation:ctablink 1s steps(2,jump-none) infinite;
+  }
+  @keyframes ctablink{ 0%{opacity:1} 50%{opacity:.15} }
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="game" width="960" height="540"></canvas>
+  <div id="mute" title="toggle sound">SOUND ON</div>
+  <img id="introgif" alt="">
+  <div id="fightcta" class="introtext">CLICK TO FIGHT OFF THE Z&rsquo;S</div>
+  <audio id="bgm" src="assets/Hudu_RX_Test_mixdown.mp3" loop preload="auto"></audio>
+</div>
+<script>
+"use strict";
+/* ============================================================
+   HuduRX · FIGHT THE Z'S — powered by ThunderStix
+   You are Doc. The Z's are coming. Science never rests.
+   ============================================================ */
+
+const W = 960, H = 540;
+const cv = document.getElementById('game');
+const cx = cv.getContext('2d');
+
+/* ---------- responsive scale ---------- */
+function fit(){
+  const s = Math.min(innerWidth/W, innerHeight/H) * 0.97;
+  cv.style.width  = (W*s)+'px';
+  cv.style.height = (H*s)+'px';
+}
+addEventListener('resize', fit); fit();
+
+/* ---------- brand palette ---------- */
+const C = {
+  purple:'#7c4dc4', purpleLt:'#a07ae0', purpleDk:'#4d2d85',
+  gold:'#f2c12e', goldDk:'#c79a14',
+  green:'#5cb86a', greenLt:'#8fe09b',
+  ink:'#17141c', char:'#262130', char2:'#312a40',
+  bone:'#f4efe6', sleepy:'#8fa3c4', sleepyDk:'#5d7194',
+};
+
+/* ---------- audio (synth, no assets) ---------- */
+let AC = null, muted = false;
+function audio(){ if(!AC) AC = new (window.AudioContext||window.webkitAudioContext)(); if(AC.state==='suspended') AC.resume(); return AC; }
+function tone(freq, dur, type='square', vol=0.08, slide=0){
+  if(muted) return;
+  try{
+    const a = audio(), t = a.currentTime;
+    const o = a.createOscillator(), g = a.createGain();
+    o.type = type; o.frequency.setValueAtTime(freq, t);
+    if(slide) o.frequency.exponentialRampToValueAtTime(Math.max(30,freq+slide), t+dur);
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
+    o.connect(g); g.connect(a.destination);
+    o.start(t); o.stop(t+dur);
+  }catch(e){}
+}
+function noise(dur, vol=0.12){
+  if(muted) return;
+  try{
+    const a = audio(), t = a.currentTime;
+    const n = a.sampleRate*dur, buf = a.createBuffer(1, n, a.sampleRate);
+    const d = buf.getChannelData(0);
+    for(let i=0;i<n;i++) d[i] = (Math.random()*2-1)*(1-i/n);
+    const s = a.createBufferSource(), g = a.createGain();
+    s.buffer = buf; g.gain.value = vol;
+    s.connect(g); g.connect(a.destination); s.start(t);
+  }catch(e){}
+}
+const sfx = {
+  zap:   ()=>{ tone(880, .09,'square',.05,-600); },
+  hit:   ()=>{ noise(.12,.10); tone(140,.15,'sawtooth',.07,-80); },
+  kill:  ()=>{ tone(520,.07,'square',.05,300); tone(760,.09,'square',.04,400); },
+  pick:  ()=>{ [660,880,1100,1320].forEach((f,i)=>setTimeout(()=>tone(f,.1,'square',.06),i*55)); },
+  perfect:()=>{ [880,1100,1320,1760,2200].forEach((f,i)=>setTimeout(()=>tone(f,.14,'square',.07),i*60)); },
+  graze: ()=>{ tone(1500,.05,'sine',.035,200); },
+  thunder:()=>{ noise(.5,.22); tone(60,.6,'sawtooth',.14,-20); tone(48,.8,'triangle',.12,-10); },
+  doze:  ()=>{ [440,360,290,220,160].forEach((f,i)=>setTimeout(()=>tone(f,.3,'triangle',.07),i*180)); },
+  wave:  ()=>{ tone(330,.12,'square',.05,80); setTimeout(()=>tone(440,.14,'square',.05,100),120); },
+  vipdown:()=>{ [340,260,190].forEach((f,i)=>setTimeout(()=>tone(f,.2,'triangle',.07),i*100)); },
+  vipsave:()=>{ tone(523,.1,'sine',.06); setTimeout(()=>tone(784,.14,'sine',.06),110); },
+};
+const muteBtn = document.getElementById('mute');
+muted = localStorage.getItem('vudu_muted')==='1';
+const muteLabel = ()=> muted ? '🔇 SOUND OFF' : '🔊 SOUND ON';
+muteBtn.textContent = muteLabel();
+muteBtn.onclick = function(){
+  muted = !muted;
+  this.textContent = muteLabel();
+  localStorage.setItem('vudu_muted', muted ? '1' : '0');
+  bgm.muted = muted;
+};
+/* inside the canvas corner on menus, parked below it during play */
+function placeMute(inside){
+  muteBtn.style.bottom = inside ? '12px' : '-46px';
+  muteBtn.style.right  = inside ? '12px' : '0';
+}
+
+/* ---------- music ---------- */
+const bgm = document.getElementById('bgm');
+bgm.volume = 0.55;   // leave headroom for the zap/thunder SFX
+function startMusic(){
+  if(!bgm.paused) return;
+  bgm.muted = muted;
+  const p = bgm.play();
+  if(p && p.catch) p.catch(()=>{});  // if blocked, the next click tries again
+}
+
+/* ---------- intro GIF (loops behind the HTML overlay text) ---------- */
+const gif = document.getElementById('introgif');
+const fightCta = document.getElementById('fightcta');
+const GIF_SRC = 'assets/ThunderSticks_Vector-ezgif.com-optimize.gif';
+const INTRO_LEN = 3;   // seconds of gif before the fight prompt appears
+let introEnded = false, introStart = 0, ctaTimer = 0;
+const introAge = ()=> (performance.now()-introStart)/1000;
+function showCta(){
+  if(state!==ST.INTRO || introEnded) return;
+  introEnded = true;
+  fightCta.style.display = 'block';   // gif keeps looping behind the call to fight
+}
+
+/* ---------- helpers ---------- */
+const rnd = (a,b)=> a + Math.random()*(b-a);
+const clamp = (v,a,b)=> v<a?a : v>b?b : v;
+const dist2 = (ax,ay,bx,by)=>{ const dx=ax-bx, dy=ay-by; return dx*dx+dy*dy; };
+
+/* ---------- HuduRX background pattern (official SVG "tonal texture") ----------
+   The art is near-black #1a1a1a shapes on transparent. We use it as a mask and
+   refill the shapes with a faint lavender-white so they read just slightly
+   lighter than the black background — a subtle, brand-tinted texture. */
+const PAT_TINT = '#cdc0e6';   // shape color before alpha
+const PAT_ALPHA = 0.05;       // how far above the background the texture sits
+const patCanvas = document.createElement('canvas');
+let patReady = false;
+const patImg = new Image();
+patImg.onload = ()=>{
+  const pw = W+40, ph = H+40;     // oversized so screen shake never reveals an edge
+  patCanvas.width = pw; patCanvas.height = ph;
+  const g = patCanvas.getContext('2d');
+  // cover-fit the SVG composition across the play field
+  const s = Math.max(pw/patImg.width, ph/patImg.height);
+  const dw = patImg.width*s, dh = patImg.height*s;
+  g.drawImage(patImg, (pw-dw)/2, (ph-dh)/2, dw, dh);
+  // recolor the shapes to the tint, preserving their alpha
+  g.globalCompositeOperation = 'source-in';
+  g.fillStyle = PAT_TINT;
+  g.fillRect(0,0,pw,ph);
+  patReady = true;
+};
+patImg.src = 'assets/Hudu_Pattern.svg';
+
+/* title-screen background art (1920x1200, baked storm + edge lightning) */
+const bgImg = new Image(); let bgReady = false;
+bgImg.onload = ()=> bgReady = true;
+bgImg.src = 'assets/HuduRX_Thunderstix_Landing_Page_BKGD.png';
+
+/* VIP escort sprite (FPO, temporary) rendered at 75% of Doc's on-screen size */
+const vipImg = new Image(); let vipReady = false;
+vipImg.onload = ()=> vipReady = true;
+vipImg.src = 'assets/FPO_VIP.png';      // 400 x 321
+const VIP_H = 104 * 1.05 * 0.75 * 0.70; // 75% of Doc, then 30% smaller again
+
+/* VIP roster — loaded from partners.json at runtime so brands slot in WITHOUT a
+   code edit. This built-in entry is the fallback if the manifest is missing or
+   blocked (e.g. opened via file://), so the game always works. */
+let VIP_TYPES = [
+  { name:'VIP', accent:'#e06cf0', intro:'KEEP ’EM LIT!', img:vipImg },
+];
+/* pull the partner roster from the manifest; each sprite is a path under assets/ */
+fetch('partners.json')
+  .then(r => r.ok ? r.json() : Promise.reject(r.status))
+  .then(data => {
+    const list = data && data.vips;
+    if(Array.isArray(list) && list.length){
+      VIP_TYPES = list.map(p => {
+        const im = new Image(); im.src = p.sprite || 'assets/FPO_VIP.png';
+        return { name:(p.name||'VIP').toString().slice(0,18),
+                 accent: p.accent || '#e06cf0',
+                 intro: p.intro || 'KEEP ’EM LIT!',
+                 img: im };
+      });
+    }
+  })
+  .catch(()=>{ /* keep the built-in fallback */ });
+
+/* ---------- brand art (official SVGs; canvas vectors are the fallback) ---------- */
+const docImg = new Image();  let docReady = false;
+docImg.onload = ()=> docReady = true;
+docImg.src = 'assets/Doc_Hudu.svg';                  // 500 x 500
+const logoImg = new Image(); let logoReady = false;
+logoImg.onload = ()=> logoReady = true;
+logoImg.src = 'assets/ThunderStix_Game_Logo.svg'; // 936.6 x 489.59 (full hero lockup w/ "by HUDU RX")
+/* ThunderStix flavor labels (303 x 114) — one picked at random per spawn */
+const stixImgs = ['lime','coco','grape'].map(f=>{
+  const im = new Image();
+  im.onload = ()=>{ im.ready = true; };
+  im.src = 'assets/THSTX_'+f+'.png';
+  return im;
+});
+
+/* ---------- game state ---------- */
+const ST = { TITLE:0, PLAY:1, OVER:2, INTRO:3 };
+let state = ST.TITLE;
+let score = 0, best = +(localStorage.getItem('vudu_best')||0);
+let wave = 0, waveTimer = 0, spawnQueue = 0, spawnTick = 0;
+let combo = 0, comboTimer = 0, comboBest = 0;
+let shake = 0, flashT = 0, dozeT = 0, time = 0;
+let zKills = 0, stixGrabbed = 0;
+let perfectSips = 0, grazes = 0, clapBonus = 1, grade = null;
+let elapsed = 0;                 // seconds survived this run (drives the speed bonus)
+let finalScore = 0, speedMult = 1, pacePerMin = 0;
+let bestFinal = +(localStorage.getItem('vudu_bestfinal')||0);
+
+const player = {
+  x: W/2, y: H/2, r: 26,
+  vx:0, vy:0, speed: 250,   // base move speed; ThunderStix bumps it (see THUNDER_SPEED)
+  energy: 100, maxEnergy: 100,
+  fireCd: 0, hurtT: 0,
+  thunder: 0,          // thunder-mode seconds remaining
+  aimX: W/2, aimY: 0,
+  face: 1, walk: 0,
+};
+
+let bolts = [], zs = [], stix = [], parts = [], floats = [], zzz = [];
+let arcs = [], shocks = [], hitstop = 0;
+let bosses = [], puddles = [], sandballs = [];   // big-boss fights + their hazards
+let cursedT = 0;                                 // Baron Slumber's faster-drain curse
+let vips = [], vipsLost = 0, vipsFreed = 0;       // escorted VIPs inherited from boss kills
+const VIP_CAP = 4;                               // beyond this, a boss kill revives the crew instead
+
+/* ---------- title screen FX ---------- */
+let titleBolts = [], titleBoltTimer = 0.3, hoverPlay = false;
+function spawnTitleBolt(){
+  const side = Math.random()<0.5 ? 0 : 1;
+  let x = side ? rnd(W-160, W-40) : rnd(40, 160), y = -12;
+  const pts = [[x,y]];
+  while(y < H+12){
+    y += rnd(22, 44);
+    x += rnd(-30, 30);
+    pts.push([x,y]);
+  }
+  titleBolts.push({ pts, side, life: 0.36, max: 0.36 });
+}
+
+const FLAVORS = [
+  {name:'LIME LAZARUS',         col:'#8fe09b'},
+  {name:'PINEAPPLE COCO-LOCO',  col:'#f2c12e'},
+  {name:'GRAPE GAMBIT',         col:'#c9a9f0'},
+];
+
+/* ---------- input ---------- */
+const keys = {};
+addEventListener('keydown', e=>{
+  keys[e.code] = true;
+  if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code)) e.preventDefault();
+  if(state!==ST.PLAY && (e.code==='Space'||e.code==='Enter')) startOrRestart();
+});
+addEventListener('keyup', e=> keys[e.code] = false);
+
+let pointerDown = false, pointerOnCanvas = false;
+function canvasPos(e){
+  const r = cv.getBoundingClientRect();
+  return { x:(e.clientX-r.left)/r.width*W, y:(e.clientY-r.top)/r.height*H };
+}
+cv.addEventListener('pointerdown', e=>{
+  const p = canvasPos(e);
+  player.aimX = p.x; player.aimY = p.y;
+  pointerDown = true;
+  if(state!==ST.PLAY) startOrRestart();
+});
+cv.addEventListener('pointermove', e=>{
+  const p = canvasPos(e);
+  player.aimX = p.x; player.aimY = p.y;
+  pointerOnCanvas = true;
+});
+addEventListener('pointerup', ()=> pointerDown = false);
+
+function startOrRestart(){
+  audio(); // unlock audio on gesture
+  startMusic(); // first click kicks off the soundtrack; no-op after that
+  if(state===ST.OVER && time - overAt < 0.6) return; // debounce
+  if(state===ST.TITLE){ enterIntro(); return; }
+  /* swallow the ghost second click of a double-click so it can't insta-skip the intro */
+  if(state===ST.INTRO && !introEnded && introAge() < 0.6) return;
+  beginPlay(); // INTRO click (skip / start prompt) or OVER restart
+}
+function enterIntro(){
+  state = ST.INTRO;
+  introEnded = false;
+  introStart = performance.now();
+  gif.src = '';            // reset so the gif restarts from frame 0
+  gif.src = GIF_SRC;
+  gif.style.display = 'block';
+  fightCta.style.display = 'none';
+  clearTimeout(ctaTimer);
+  ctaTimer = setTimeout(showCta, INTRO_LEN*1000);  // fires even if the tab is throttled
+}
+function beginPlay(){
+  clearTimeout(ctaTimer);
+  gif.style.display = 'none';
+  fightCta.style.display = 'none';
+  placeMute(false);
+  resetGame();
+  state = ST.PLAY;
+}
+let overAt = 0;
+
+/* ---------- entities ---------- */
+function spawnZ(big){
+  // Z's drift in from a random edge
+  const side = Math.floor(rnd(0,4));
+  let x,y;
+  if(side===0){ x=rnd(0,W); y=-40; }
+  else if(side===1){ x=W+40; y=rnd(0,H); }
+  else if(side===2){ x=rnd(0,W); y=H+40; }
+  else { x=-40; y=rnd(0,H); }
+  const boss = !!big;
+  /* rushers: small, fast Z's that punish lazy kiting (from wave 4) */
+  const rush = !boss && wave>=4 && Math.random()<0.22;
+  let spd = boss ? rnd(26,34)*(1+wave*0.06)
+                 : rnd(40,62)*(1+wave*0.13)*(rush?1.65:1);
+  spd = Math.min(boss? 95 : 215, spd);
+  zs.push({
+    x, y,
+    r: boss? 46 : rush? rnd(13,16) : rnd(17,23),
+    hp: boss? 6+wave : 1,
+    maxHp: boss? 6+wave : 1,
+    spd,
+    wob: rnd(0,6.28), wobAmp: rnd(8,22),
+    boss, rush,
+    hitT: 0,
+    huntVip: pickHunt(boss),
+  });
+}
+/* some Z's lock onto a VIP instead of Doc, so the escort is a real threat */
+function pickHunt(isBoss){
+  if(isBoss || vips.length===0) return null;
+  return Math.random() < 0.4 ? vips[Math.floor(Math.random()*vips.length)] : null;
+}
+function spawnStix(){
+  /* keep packs out of arm's reach so they're earned, not gifted */
+  let x = W/2, y = H/2;
+  for(let i=0;i<10;i++){
+    x = rnd(90, W-90); y = rnd(140, H-80);
+    if(dist2(x,y,player.x,player.y) > 220*220) break;
+  }
+  stix.push({
+    x, y,
+    t: 0, life: 9,           // disappears if ignored
+    bob: rnd(0,6.28),
+    flavor: Math.floor(rnd(0,3)),
+  });
+}
+/* spawn a plain Z at an exact spot (used by boss attacks) */
+function spawnZAt(x,y){
+  let spd = Math.min(215, rnd(40,62)*(1+wave*0.13));
+  zs.push({ x,y, r:rnd(17,23), hp:1, maxHp:1, spd,
+    wob:rnd(0,6.28), wobAmp:rnd(8,22), boss:false, rush:false, hitT:0, huntVip:pickHunt(false) });
+}
+/* ---------- VIPs (escort) ---------- */
+function spawnVip(x,y){
+  const def = VIP_TYPES[vipsFreed % VIP_TYPES.length]; vipsFreed++;
+  vips.push({ x:clamp(x,40,W-40), y:clamp(y,90,H-40),
+    wake:100, maxWake:100, r:15, bob:rnd(0,6.28), hurtT:0, dozed:false,
+    wTimer:rnd(0,1), wAng:rnd(0,6.283), wRad:rnd(40,120),   // roam state
+    type:def });
+  floatText(x, y-58, def.name+' FREED!', def.accent, 22);
+  floatText(x, y-36, def.intro, C.greenLt, 14);
+  sfx.vipsave();
+}
+function updateVips(dt){
+  for(let i=0;i<vips.length;i++){
+    const v = vips[i];
+    v.bob += dt;
+    v.hurtT = Math.max(0, v.hurtT-dt);
+    /* conga-line follow: VIP 0 trails Doc, each next trails the one ahead */
+    /* wandering-child roam: amble toward a drifting point near Doc, on a soft leash */
+    v.wTimer -= dt;
+    if(v.wTimer <= 0){          // pick a fresh place to wander toward
+      v.wTimer = rnd(1.5, 3.0);
+      v.wAng = rnd(0, 6.283);
+      v.wRad = rnd(30, 135);    // close-ish zone — never glued, never strays
+    }
+    const ox = player.x + Math.cos(v.wAng)*v.wRad;
+    const oy = player.y + Math.sin(v.wAng)*v.wRad;
+    const pdx = player.x-v.x, pdy = player.y-v.y, pd = Math.hypot(pdx,pdy)||1;
+    const spd = pd > 170 ? 330 : 115;   // scamper back if they've drifted too far, else amble
+    const dx = ox-v.x, dy = oy-v.y, d = Math.hypot(dx,dy)||1;
+    if(d > 4){ const pull = Math.min(d, spd*dt); v.x += dx/d*pull; v.y += dy/d*pull; }
+    if(pd > 210){ v.x = player.x - pdx/pd*210; v.y = player.y - pdy/pd*210; }   // hard leash
+    v.x = clamp(v.x, 18, W-18); v.y = clamp(v.y, 78, H-18);
+    /* wakefulness: drains while Z's crowd them, recovers when the area is clear */
+    let nearZ = false;
+    for(const z of zs){ if(dist2(z.x,z.y,v.x,v.y) < 120*120){ nearZ = true; break; } }
+    v.wake = clamp(v.wake + (nearZ ? -6 : 5)*dt, 0, v.maxWake);
+    if(v.wake<=0 && !v.dozed){
+      v.dozed = true; vipsLost++;
+      floatText(v.x, v.y-30, 'VIP DOZED OFF!', '#e0563c', 22);
+      burst(v.x, v.y, C.sleepy, 20, 220);
+      shake = Math.max(shake, 8);
+      sfx.vipdown();
+    }
+  }
+  vips = vips.filter(v=>!v.dozed);
+}
+
+/* ---------- big bosses ---------- */
+const BOSSES = {
+  lazyass: { name:'LAZY ASS',      r:54, spd:40, contact:20, hp:w=>30+w },
+  sandman: { name:'THE SANDMAN',   r:46, spd:74, contact:18, hp:w=>40+w },
+  baron:   { name:'BARON SLUMBER', r:48, spd:60, contact:22, hp:w=>Math.round(55+w*1.4) },
+};
+/* milestone bosses every 5th wave, cycling the trio */
+function bossForWave(w){
+  if(w<5 || w%5!==0) return null;
+  return ['lazyass','sandman','baron'][((w/5)-1)%3];
+}
+function spawnBoss(type){
+  const cfg = BOSSES[type];
+  const hp = cfg.hp(wave);
+  bosses.push({
+    type, cfg, x:W/2, y:-70, r:cfg.r, hp, maxHp:hp,
+    spd:cfg.spd, hitT:0, touchCd:0, atkCd:2.6, brayT:0, face:1, t:0, entering:true,
+  });
+  floatText(W/2, 130, cfg.name+'!', C.gold, 40);
+  floatText(W/2, 162, '⚡ BOSS ⚡', C.purpleLt, 18);
+  sfx.wave();
+}
+
+const bossBehavior = {
+  lazyass(b, dt){
+    // lumbers toward you, periodically brays a fan of Z's from its mouth
+    const dx=player.x-b.x, dy=player.y-b.y, d=Math.hypot(dx,dy)||1;
+    b.x += dx/d*b.spd*dt; b.y += dy/d*b.spd*dt;
+    b.face = dx>=0?1:-1;
+    b.atkCd -= dt;
+    if(b.atkCd<=0){ b.atkCd = 3.0; b.brayT = 0.6; }   // wind-up telegraph
+    if(b.brayT>0){
+      const was = b.brayT; b.brayT -= dt;
+      if(was>0 && b.brayT<=0){
+        const mx = b.x + b.face*b.r*0.6, my = b.y;
+        const n = 3 + Math.floor(wave/5);
+        for(let i=0;i<n;i++) spawnZAt(mx + b.face*rnd(6,30), my + rnd(-18,18));
+        burst(mx,my,C.sleepy,14,210); sfx.wave();
+      }
+    }
+  },
+  sandman(b, dt){
+    // keeps mid-range, lobs sleep-sand that pools into a slow/drain hazard
+    const dx=player.x-b.x, dy=player.y-b.y, d=Math.hypot(dx,dy)||1;
+    const dir = d>270 ? 1 : -1;
+    b.x += (dx/d*dir + (-dy/d)*0.6)*b.spd*dt;
+    b.y += (dy/d*dir + ( dx/d)*0.6)*b.spd*dt;
+    b.face = dx>=0?1:-1;
+    b.atkCd -= dt;
+    if(b.atkCd<=0){
+      b.atkCd = 2.3;
+      const tx = clamp(player.x + player.vx*0.5, 60, W-60);
+      const ty = clamp(player.y + player.vy*0.5, 120, H-60);
+      sandballs.push({ x:b.x, y:b.y-10, sx:b.x, sy:b.y-10, tx, ty, t:0, dur:0.9 });
+      sfx.zap();
+    }
+  },
+  baron(b, dt){
+    // drifts in, then teleports / summons a ring / curses your energy
+    const dx=player.x-b.x, dy=player.y-b.y, d=Math.hypot(dx,dy)||1;
+    b.x += dx/d*b.spd*0.5*dt; b.y += dy/d*b.spd*0.5*dt;
+    b.face = dx>=0?1:-1;
+    b.atkCd -= dt;
+    if(b.atkCd<=0){
+      b.atkCd = 3.2;
+      const roll = Math.random();
+      if(roll<0.5){
+        burst(b.x,b.y,C.purpleLt,18,260); sfx.zap();
+        b.x = rnd(90,W-90); b.y = rnd(130,H-110);
+        burst(b.x,b.y,C.purple,18,260);
+      } else if(roll<0.8){
+        const n=5, R=155;
+        for(let i=0;i<n;i++){ const a=i/n*6.28+rnd(0,1); spawnZAt(clamp(player.x+Math.cos(a)*R,40,W-40), clamp(player.y+Math.sin(a)*R,110,H-30)); }
+        sfx.wave();
+      } else {
+        cursedT = 5;
+        floatText(player.x, player.y-52, 'CURSED! ENERGY DRAINING', C.purpleLt, 16);
+        sfx.hit();
+      }
+    }
+  },
+};
+
+function updateBosses(dt){
+  for(const b of bosses){
+    b.t += dt;
+    b.hitT = Math.max(0, b.hitT-dt);
+    b.touchCd = Math.max(0, b.touchCd-dt);
+    if(b.entering){
+      b.y += 150*dt;
+      if(b.y >= 150) b.entering = false;
+    } else {
+      bossBehavior[b.type](b, dt);
+      b.x = clamp(b.x, b.r, W-b.r);
+      b.y = clamp(b.y, 100, H-40);
+    }
+    // take bolt fire
+    for(const bo of bolts){
+      if(bo.pierce>0 && dist2(bo.x,bo.y,b.x,b.y) < (b.r+8)*(b.r+8)){
+        bo.pierce--; b.hp--; b.hitT = 0.08;
+        burst(bo.x,bo.y,C.gold,4,150);
+        if(b.hp<=0){ killBoss(b); break; }
+        else if(Math.random()<0.25) sfx.hit();
+      }
+    }
+    // body-check the player
+    if(!b.dead && b.touchCd<=0 && !b.entering &&
+       dist2(b.x,b.y,player.x,player.y) < (b.r+player.r-8)*(b.r+player.r-8)){
+      b.touchCd = 0.8;
+      const dmg = b.cfg.contact;
+      player.energy = Math.max(0, player.energy - dmg);
+      player.hurtT = 0.35; combo = 0;
+      shake = Math.max(shake, 15);
+      burst(player.x,player.y,C.sleepy,16,240);
+      floatText(player.x, player.y-44, '-'+dmg+' ENERGY', C.sleepy, 18);
+      sfx.hit();
+      if(player.energy<=0){ gameOver(); return; }
+    }
+  }
+  bosses = bosses.filter(b=>!b.dead);
+}
+
+function killBoss(b){
+  b.dead = true; zKills++;
+  const mult = 1 + Math.min(7, Math.floor(combo/3));
+  const pts = 600 * mult * clapBonus;
+  score += pts;
+  burst(b.x,b.y,C.gold,48,440); burst(b.x,b.y,C.purpleLt,30,360);
+  floatText(b.x, b.y-34, b.cfg.name+' DOWN!', C.gold, 30);
+  floatText(b.x, b.y, '+'+pts + (mult>1?'  x'+mult:''), C.greenLt, 22);
+  shake = Math.max(shake, 20); flashT = Math.max(flashT, 0.3);
+  sfx.kill(); sfx.thunder();
+  // reward the kill with a guaranteed ThunderStix on the spot
+  stix.push({ x:clamp(b.x,90,W-90), y:clamp(b.y,140,H-80), t:0, life:10, bob:rnd(0,6.28), flavor:Math.floor(rnd(0,3)) });
+  // inherit a VIP to escort (accumulates per boss; at cap, a rescue refills the crew)
+  if(vips.length < VIP_CAP) spawnVip(b.x, b.y-20);
+  else { for(const v of vips) v.wake = v.maxWake; floatText(W/2, 120, 'CREW RE-LIT!', C.gold, 24); }
+}
+
+function burst(x,y,color,n,spd){
+  for(let i=0;i<n;i++){
+    const a = rnd(0,6.28), v = rnd(spd*0.3, spd);
+    parts.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:rnd(.3,.7),max:.7,color,r:rnd(2,5)});
+  }
+}
+function floatText(x,y,txt,color,size){
+  floats.push({x,y,txt,color,size:size||20,life:1});
+}
+
+function resetGame(){
+  score=0; wave=0; waveTimer=0; spawnQueue=0; spawnTick=0;
+  combo=0; comboTimer=0; comboBest=0; zKills=0; stixGrabbed=0;
+  perfectSips=0; grazes=0; clapBonus=1; grade=null;
+  elapsed=0; finalScore=0; speedMult=1; pacePerMin=0;
+  shake=0; flashT=0; dozeT=0;
+  player.x=W/2; player.y=H/2; player.vx=0; player.vy=0;
+  player.energy=player.maxEnergy; player.thunder=0; player.fireCd=0; player.hurtT=0;
+  bolts=[]; zs=[]; stix=[]; parts=[]; floats=[]; zzz=[];
+  arcs=[]; shocks=[]; hitstop=0;
+  bosses=[]; puddles=[]; sandballs=[]; cursedT=0;
+  vips=[]; vipsLost=0; vipsFreed=0;
+  nextWave();
+}
+function nextWave(){
+  wave++;
+  spawnTick = 0;
+  const bt = bossForWave(wave);
+  if(bt){
+    /* milestone boss wave: the named boss plus a lighter trickle of adds */
+    spawnBoss(bt);
+    spawnQueue = Math.floor(6 + wave*1.2);
+  } else {
+    spawnQueue = 5 + wave*4;
+    if(wave>1){ sfx.wave(); floatText(W/2, H/2-60, 'WAVE '+wave, C.gold, 42); }
+    /* Big Snoozes scale up: 1 from wave 3, +1 every 3 waves after */
+    if(wave>=3){
+      const n = Math.ceil((wave-2)/3);
+      for(let i=0;i<n;i++) spawnZ(true);
+    }
+  }
+}
+
+/* ---------- update ---------- */
+function update(dt){
+  time += dt;
+  shake = Math.max(0, shake - dt*40);
+  flashT = Math.max(0, flashT - dt);
+  if(state===ST.INTRO){
+    /* wall-clock backup for the setTimeout in enterIntro */
+    if(!introEnded && introAge() >= INTRO_LEN) showCta();
+    return;
+  }
+  if(state!==ST.PLAY){
+    // ambient drifting z's on title / game-over
+    if(Math.random()<dt*1.2) zzz.push({x:rnd(0,W),y:H+20,vy:-rnd(14,30),s:rnd(14,30),a:1,wob:rnd(0,6)});
+    zzz.forEach(z=>{ z.y+=z.vy*dt; z.wob+=dt; z.a=clamp(z.y/H,0,1); });
+    zzz = zzz.filter(z=>z.y>-40);
+    if(state===ST.TITLE){
+      // storm: random edge lightning strikes
+      titleBoltTimer -= dt;
+      if(titleBoltTimer<=0){ spawnTitleBolt(); titleBoltTimer = rnd(0.45, 1.3); }
+      for(const b of titleBolts) b.life -= dt;
+      titleBolts = titleBolts.filter(b=>b.life>0);
+    }
+    return;
+  }
+
+  elapsed += dt;   // the run clock — feeds the end-of-run Speed Bonus
+  cursedT = Math.max(0, cursedT - dt);
+
+  /* --- hazard sampling (Sandman's sleep puddles slow you & drain faster) --- */
+  let hazardSlow = 1, hazardDrain = 0;
+  for(const p of puddles){
+    if(p.t > p.form && dist2(p.x,p.y,player.x,player.y) < p.r*p.r){
+      hazardSlow = 0.55; hazardDrain = 7; break;
+    }
+  }
+
+  /* --- player movement --- */
+  let mx = (keys.KeyD||keys.ArrowRight?1:0) - (keys.KeyA||keys.ArrowLeft?1:0);
+  let my = (keys.KeyS||keys.ArrowDown?1:0) - (keys.KeyW||keys.ArrowUp?1:0);
+  // touch: walk toward held pointer if far away
+  if(pointerDown && !mx && !my){
+    const dx = player.aimX-player.x, dy = player.aimY-player.y;
+    const d = Math.hypot(dx,dy);
+    if(d > 90){ mx = dx/d; my = dy/d; }
+  }
+  const ml = Math.hypot(mx,my)||1;
+  // sleepiness slows you down — energy IS speed
+  const sleepFactor = 0.55 + 0.45*(player.energy/player.maxEnergy);
+  // ThunderStix kicks him into a higher gear for the duration of Thunder Mode
+  const THUNDER_SPEED = 1.35;
+  const thunderFactor = player.thunder>0 ? THUNDER_SPEED : 1;
+  player.vx = mx/ml * player.speed * sleepFactor * thunderFactor * hazardSlow;
+  player.vy = my/ml * player.speed * sleepFactor * thunderFactor * hazardSlow;
+  player.x = clamp(player.x + player.vx*dt, 50, W-50);
+  player.y = clamp(player.y + player.vy*dt, 130, H-46);
+  if(mx) player.face = mx>0?1:-1;
+  player.walk += Math.hypot(player.vx,player.vy)*dt*0.06;
+  player.hurtT = Math.max(0, player.hurtT-dt);
+  player.thunder = Math.max(0, player.thunder-dt);
+
+  /* --- energy drain: the Z's are always winning slowly (curse & puddles speed it up) --- */
+  player.energy -= dt * (2.0 + wave*0.3 + hazardDrain) * (cursedT>0 ? 2 : 1);
+  if(player.energy <= 0){ gameOver(); return; }
+
+  /* --- firing --- */
+  player.fireCd -= dt;
+  const wantFire = pointerDown || keys.Space;
+  if(wantFire && player.fireCd<=0){
+    const rate = player.thunder>0 ? 0.085 : 0.21;
+    player.fireCd = rate;
+    let tx = player.aimX, ty = player.aimY;
+    if(keys.Space && !pointerDown){
+      // space = auto-aim nearest Z
+      let bd = 1e12, tgt = null;
+      for(const z of zs){ const d = dist2(player.x,player.y,z.x,z.y); if(d<bd){bd=d;tgt=z;} }
+      if(tgt){ tx = tgt.x; ty = tgt.y; } else { tx = player.x + player.face*100; ty = player.y; }
+    }
+    const dx = tx-player.x, dy = ty-player.y, d = Math.hypot(dx,dy)||1;
+    const sp = 760;
+    bolts.push({
+      x: player.x + dx/d*30, y: player.y-14 + dy/d*30,
+      vx: dx/d*sp, vy: dy/d*sp,
+      life: 0.9, pierce: player.thunder>0 ? 3 : 1,
+      seed: Math.random()*100,
+    });
+    if(mx===0) player.face = dx>=0?1:-1;
+    sfx.zap();
+  }
+
+  /* --- bolts --- */
+  for(const b of bolts){
+    b.x += b.vx*dt; b.y += b.vy*dt; b.life -= dt;
+  }
+  bolts = bolts.filter(b=> b.life>0 && b.x>-30 && b.x<W+30 && b.y>-30 && b.y<H+30 && b.pierce>0);
+
+  /* --- spawn waves --- */
+  spawnTick -= dt;
+  if(spawnQueue>0 && spawnTick<=0){
+    spawnTick = Math.max(0.15, 0.95 - wave*0.08);
+    /* burst spawns: 2 at a time from wave 5, 3 from wave 9 */
+    let n = 1 + (wave>=5?1:0) + (wave>=9?1:0);
+    while(n-- > 0 && spawnQueue>0){ spawnZ(false); spawnQueue--; }
+  }
+  if(spawnQueue<=0 && zs.length===0 && bosses.length===0) nextWave();
+
+  /* --- ThunderStix pickups --- */
+  if(stix.length===0){
+    // spawn more urgently when drowsy — the product shows up when you need it
+    const urgency = player.energy < 40 ? 2.2 : 0.55;
+    if(Math.random() < dt*urgency*0.45) spawnStix();
+  }
+  for(const s of stix){
+    s.t += dt; s.life -= dt;
+    if(dist2(s.x,s.y,player.x,player.y) < (player.r+24)*(player.r+24)){
+      s.dead = true;
+      stixGrabbed++;
+      /* Perfect Sip: snagged in the blinking expiry window, or on the brink of dozing */
+      const perfect = s.life < 2.5 || player.energy < player.maxEnergy*0.2;
+      if(perfect) perfectSips++;
+      thunderClap(s.flavor, perfect);
+    }
+  }
+  stix = stix.filter(s=>!s.dead && s.life>0);
+
+  /* --- Z's --- */
+  for(const z of zs){
+    z.wob += dt*2;
+    // home on the assigned VIP if it's still awake, otherwise on Doc
+    const hv = z.huntVip && !z.huntVip.dozed ? z.huntVip : null;
+    const tx = hv? hv.x : player.x, ty = hv? hv.y : player.y;
+    const tdx = tx-z.x, tdy = ty-z.y, td = Math.hypot(tdx,tdy)||1;
+    z.x += (tdx/td*z.spd + Math.cos(z.wob)*z.wobAmp*0.4) * dt;
+    z.y += (tdy/td*z.spd + Math.sin(z.wob*0.8)*z.wobAmp*0.3) * dt;
+    z.hitT = Math.max(0, z.hitT-dt);
+    // distance to Doc (graze + player collision use this)
+    const dx = player.x-z.x, dy = player.y-z.y, d = Math.hypot(dx,dy)||1;
+
+    /* graze: a close shave keeps you sharp (once per Z) */
+    if(!z.grazed){
+      const rim = z.r + player.r;
+      if(d < rim+14 && d > rim-4){
+        z.grazed = true;
+        grazes++;
+        score += 15;
+        player.energy = Math.min(player.maxEnergy, player.energy + 1);
+        burst((player.x+z.x)/2, (player.y+z.y)/2, C.greenLt, 4, 130);
+        floatText(player.x, player.y-48, 'CLOSE SHAVE +15', C.greenLt, 13);
+        sfx.graze();
+      }
+    }
+
+    // bolt collisions
+    for(const b of bolts){
+      if(b.pierce>0 && dist2(b.x,b.y,z.x,z.y) < (z.r+9)*(z.r+9)){
+        b.pierce--;
+        z.hp--; z.hitT = 0.1;
+        burst(z.x,z.y,C.purpleLt,6,160);
+        if(z.hp<=0){ killZ(z); }
+        else sfx.hit();
+      }
+    }
+    // player collision — the Z drains you and pops
+    if(!z.dead && dist2(z.x,z.y,player.x,player.y) < (z.r+player.r-6)*(z.r+player.r-6)){
+      z.dead = true;
+      const dmg = Math.round(z.boss? Math.min(40, 24+wave) : Math.min(26, 11+wave));
+      player.energy = Math.max(0, player.energy - dmg);
+      player.hurtT = 0.35;
+      combo = 0;
+      shake = Math.max(shake, z.boss? 14:8);
+      burst(player.x,player.y,C.sleepy,14,220);
+      floatText(player.x, player.y-40, '-'+dmg+' ENERGY', C.sleepy, 18);
+      sfx.hit();
+      if(player.energy<=0){ gameOver(); return; }
+    }
+    // VIP collision — a Z reaching a VIP saps its wakefulness and pops
+    if(!z.dead && vips.length){
+      for(const v of vips){
+        if(dist2(z.x,z.y,v.x,v.y) < (z.r+v.r-2)*(z.r+v.r-2)){
+          z.dead = true;
+          const vd = z.boss?22:13;
+          v.wake = Math.max(0, v.wake - vd);
+          v.hurtT = 0.3;
+          burst(v.x,v.y,'#ffae6b',10,180);
+          floatText(v.x, v.y-24, '-'+vd, '#ffae6b', 13);
+          sfx.hit();
+          break;
+        }
+      }
+    }
+  }
+  zs = zs.filter(z=>!z.dead);
+  updateVips(dt);
+
+  /* --- bosses & their hazards --- */
+  updateBosses(dt);
+  if(state!==ST.PLAY) return;   // a boss body-check may have ended the run
+  for(const sb of sandballs){
+    sb.t += dt;
+    if(sb.t >= sb.dur){
+      sb.dead = true;
+      puddles.push({ x:sb.tx, y:sb.ty, r:46, t:0, life:5, form:0.45 });
+      burst(sb.tx, sb.ty, '#c9b27a', 12, 130);
+    }
+  }
+  sandballs = sandballs.filter(s=>!s.dead);
+  for(const p of puddles) p.t += dt;
+  puddles = puddles.filter(p=> p.t < p.life);
+
+  /* --- combo decay --- */
+  comboTimer -= dt;
+  if(comboTimer<=0) combo = 0;
+
+  /* --- particles & floats --- */
+  for(const p of parts){ p.x+=p.vx*dt; p.y+=p.vy*dt; p.vx*=0.92; p.vy*=0.92; p.life-=dt; }
+  parts = parts.filter(p=>p.life>0);
+  for(const f of floats){ f.y -= 36*dt; f.life -= dt*0.9; }
+  floats = floats.filter(f=>f.life>0);
+
+  /* --- lightning arcs & shockwaves --- */
+  for(const a of arcs) a.life -= dt;
+  arcs = arcs.filter(a=>a.life>0);
+  for(const s of shocks) s.t += dt;
+  shocks = shocks.filter(s=>s.t < 0.5);
+}
+
+function killZ(z){
+  z.dead = true;
+  zKills++;
+  combo++; comboTimer = 1.6; comboBest = Math.max(comboBest, combo);
+  const mult = 1 + Math.min(7, Math.floor(combo/3));
+  const vipMult = 1 + 0.2*vips.length;   // every protected VIP fattens the payout
+  const pts = Math.round((z.boss? 250 : z.rush? 60 : 25) * mult * clapBonus * vipMult);
+  score += pts;
+  burst(z.x, z.y, z.boss? C.gold : C.green, z.boss? 26 : 12, z.boss? 320 : 200);
+  floatText(z.x, z.y-20, '+'+pts + (mult>1? '  x'+mult:''), mult>1? C.gold : C.greenLt, z.boss? 26 : 16);
+  shake = Math.max(shake, z.boss? 10 : 2);
+  sfx.kill();
+  // tiny energy sip per kill — fighting keeps you awake
+  player.energy = Math.min(player.maxEnergy, player.energy + (z.boss? 6 : 1.2));
+  // kills feed the storm: each one stretches Thunder Mode a little
+  if(player.thunder>0) player.thunder = Math.min(player.thunder + 0.2, 9);
+}
+
+function thunderClap(flavor, perfect){
+  // THE product moment: full restore + screen-clearing shockwave + thunder mode
+  const f = FLAVORS[flavor|0] || FLAVORS[Math.floor(rnd(0,3))];
+  player.energy = player.maxEnergy;
+  for(const v of vips) v.wake = v.maxWake;   // the jolt wakes the whole crew too
+  player.thunder = perfect ? 7.5 : 5;
+  flashT = perfect ? 0.55 : 0.45;
+  shake = perfect ? 24 : 18;
+  hitstop = 0.22;                                   // freeze-frame on the sip
+  clapBonus = perfect ? 2 : 1;                      // perfect sips double the clap's points
+  shocks.push({x:player.x, y:player.y, t:0});       // expanding ring
+  sfx.thunder(); sfx.pick();
+  if(perfect){ sfx.perfect(); floatText(player.x, player.y-118, 'PERFECT SIP! 2X', '#fff7d6', 40); }
+  floatText(player.x, player.y-86, 'THUNDERSTIX ⚡', C.gold, 34);
+  floatText(player.x, player.y-52, f.name+'!', f.col, 24);
+  floatText(player.x, player.y-26, 'INSTANT ENERGY', C.greenLt, 15);
+  burst(player.x, player.y, C.gold, 40, 480);
+  burst(player.x, player.y, C.purpleLt, 30, 380);
+  // lightning arcs from Doc to every Z, then zap them all
+  for(const z of zs){
+    arcs.push({x1:player.x, y1:player.y-14, x2:z.x, y2:z.y, life:0.4});
+    z.hp -= 4;
+    z.hitT = 0.2;
+    if(z.hp<=0) killZ(z);
+  }
+  if(zs.length===0){
+    // no targets? crackle into the air anyway
+    for(let i=0;i<5;i++){
+      const a = rnd(0,6.28), d = rnd(120,260);
+      arcs.push({x1:player.x, y1:player.y-14, x2:player.x+Math.cos(a)*d, y2:player.y+Math.sin(a)*d, life:0.4});
+    }
+  }
+  zs = zs.filter(z=>!z.dead);
+  // the clap also smites bosses hard
+  for(const b of bosses){
+    arcs.push({x1:player.x, y1:player.y-14, x2:b.x, y2:b.y, life:0.4});
+    b.hp -= 8; b.hitT = 0.2;
+    if(b.hp<=0) killBoss(b);
+  }
+  bosses = bosses.filter(b=>!b.dead);
+  clapBonus = 1;
+}
+
+function computeGrade(){
+  const p = wave*10 + comboBest*4 + perfectSips*15 + Math.min(grazes,20)*2
+            + vips.length*20 - vipsLost*12;
+  return p>=360 ? {t:'S+', label:'FULLY LIT!', col:C.gold,     glow:true} :
+         p>=280 ? {t:'S',  label:'ELECTRIC',   col:C.purpleLt, glow:true} :
+         p>=200 ? {t:'A',  label:'WIRED',      col:C.gold} :
+         p>=120 ? {t:'B',  label:'BUZZING',    col:C.green} :
+         p>= 60 ? {t:'C',  label:'AWAKE-ISH',  col:C.bone} :
+                  {t:'D',  label:'DROWSY',     col:C.sleepy};
+}
+function computeFinal(){
+  // pace = points per minute (time floored at 20s so quick deaths don't spike it)
+  pacePerMin = Math.round(score / Math.max(elapsed/60, 1/3));
+  // Speed Bonus: 1.0x baseline, +1x per 15k/min of pace, capped at 3.0x
+  speedMult = Math.round(clamp(1 + pacePerMin/15000, 1, 3) * 10) / 10;
+  finalScore = Math.round(score * speedMult);
+}
+function fmtTime(s){
+  const m = Math.floor(s/60), sec = Math.floor(s%60);
+  return m + ':' + (sec<10?'0':'') + sec;
+}
+function gameOver(){
+  state = ST.OVER; overAt = time;
+  computeFinal();
+  grade = computeGrade();
+  best = Math.max(best, score);
+  localStorage.setItem('vudu_best', best);
+  bestFinal = Math.max(bestFinal, finalScore);
+  localStorage.setItem('vudu_bestfinal', bestFinal);
+  placeMute(true);
+  sfx.doze();
+  zzz = [];
+}
+
+/* ============================================================
+   RENDERING
+   ============================================================ */
+
+function draw(){
+  cx.save();
+  if(shake>0) cx.translate(rnd(-shake,shake)*0.5, rnd(-shake,shake)*0.5);
+
+  /* background */
+  const bgGrad = cx.createRadialGradient(W/2,H/2,80, W/2,H/2,640);
+  bgGrad.addColorStop(0, '#241e30');
+  bgGrad.addColorStop(1, C.ink);
+  cx.fillStyle = bgGrad;
+  cx.fillRect(-20,-20,W+40,H+40);
+  if(patReady){
+    cx.globalAlpha = PAT_ALPHA;
+    cx.drawImage(patCanvas, -20, -20);
+    cx.globalAlpha = 1;
+  }
+
+  if(state===ST.PLAY){
+    drawPuddles();
+    drawBosses();
+    drawStix();
+    drawZs();
+    drawVips();
+    drawSandballs();
+    drawPlayer();
+    drawBolts();
+    drawArcs();
+    drawShocks();
+    drawParticles();
+    drawFloats();
+    drawHUD();
+    drawDrowsiness();
+    drawCurse();
+  } else if(state===ST.INTRO){
+    /* the gif + prompts are HTML overlays; the sigil background shows in the letterbox */
+  } else {
+    drawAmbientZzz();
+    drawParticles();
+    if(state===ST.TITLE) drawTitle(); else drawGameOver();
+  }
+
+  /* thunder flash: white-hot strike, then gold afterglow */
+  if(flashT>0){
+    cx.fillStyle = flashT > 0.33
+      ? 'rgba(255,247,214,'+Math.min(1,flashT*1.6)+')'
+      : 'rgba(242,193,46,'+(flashT*0.9)+')';
+    cx.fillRect(-20,-20,W+40,H+40);
+  }
+  cx.restore();
+}
+
+/* ---------- Doc, the VUDUrx mascot ---------- */
+function drawDoc(x, y, scale, face, walk, hurt, thunder){
+  cx.save();
+  cx.translate(x,y);
+  cx.scale(scale*face, scale);
+  const bob = Math.sin(walk)*2;
+  cx.translate(0, bob);
+  if(hurt>0 && Math.floor(hurt*20)%2===0) cx.globalAlpha = 0.45;
+
+  /* purple mojo smoke behind */
+  cx.strokeStyle = thunder>0 ? C.gold : C.purpleLt;
+  cx.globalAlpha *= 0.5;
+  cx.lineWidth = 4; cx.lineCap='round';
+  cx.beginPath();
+  cx.moveTo(-26, 6);
+  cx.bezierCurveTo(-38, -4, -34, -22, -46, -26);
+  cx.stroke();
+  cx.beginPath();
+  cx.moveTo(24, 12);
+  cx.bezierCurveTo(36, 4, 32, -10, 44, -16);
+  cx.stroke();
+  cx.globalAlpha = hurt>0 && Math.floor(hurt*20)%2===0 ? 0.45 : 1;
+
+  /* legs */
+  cx.fillStyle = '#1c1824';
+  const lw = Math.sin(walk*2)*4;
+  cx.fillRect(-12, 22, 9, 14+lw*0.5);
+  cx.fillRect(4, 22, 9, 14-lw*0.5);
+
+  /* coat (purple-trim black) */
+  cx.fillStyle = '#221c2e';
+  cx.beginPath();
+  cx.moveTo(-17,-2); cx.lineTo(17,-2);
+  cx.lineTo(20,24); cx.lineTo(-20,24);
+  cx.closePath(); cx.fill();
+  cx.strokeStyle = C.purple; cx.lineWidth=2.5;
+  cx.beginPath(); cx.moveTo(-13,0); cx.lineTo(-15,22); cx.stroke();
+  cx.beginPath(); cx.moveTo(13,0); cx.lineTo(15,22); cx.stroke();
+  /* gold sash */
+  cx.strokeStyle = C.gold; cx.lineWidth=3;
+  cx.beginPath(); cx.moveTo(-16,8); cx.lineTo(16,12); cx.stroke();
+
+  /* arms: one holds the caduceus staff */
+  cx.strokeStyle = '#221c2e'; cx.lineWidth = 7; cx.lineCap='round';
+  cx.beginPath(); cx.moveTo(-14,4); cx.lineTo(-24,14); cx.stroke();   // back arm
+  cx.beginPath(); cx.moveTo(14,2); cx.lineTo(27,-2); cx.stroke();     // staff arm
+  /* gloves */
+  cx.fillStyle = C.bone;
+  cx.beginPath(); cx.arc(-25,15,5,0,7); cx.fill();
+  cx.beginPath(); cx.arc(28,-3,5,0,7); cx.fill();
+
+  /* caduceus staff */
+  cx.strokeStyle = thunder>0 ? C.gold : C.goldDk; cx.lineWidth=3.5;
+  cx.beginPath(); cx.moveTo(28,14); cx.lineTo(28,-26); cx.stroke();
+  cx.strokeStyle = thunder>0 ? '#fff3c4' : C.gold; cx.lineWidth=2.5;
+  cx.beginPath(); cx.moveTo(22,-8); cx.bezierCurveTo(34,-14, 22,-20, 32,-26); cx.stroke();
+  cx.beginPath(); cx.moveTo(34,-8); cx.bezierCurveTo(22,-14, 34,-20, 24,-26); cx.stroke();
+  cx.fillStyle = C.gold;
+  cx.beginPath(); cx.arc(28,-29,4,0,7); cx.fill();
+  if(thunder>0){
+    cx.fillStyle = '#fff3c4';
+    cx.beginPath(); cx.arc(28,-29, 7+Math.sin(performance.now()*0.02)*2, 0,7); cx.globalAlpha*=0.4; cx.fill(); cx.globalAlpha/= 0.4;
+  }
+
+  /* head — stitched voodoo-doll skull */
+  cx.fillStyle = C.bone;
+  cx.beginPath();
+  cx.ellipse(0,-16, 17, 16, 0, 0, 7);
+  cx.fill();
+  /* face stitches */
+  cx.strokeStyle = '#c9c2b4'; cx.lineWidth=1.5;
+  cx.beginPath(); cx.moveTo(-3,-31); cx.lineTo(-1,-22); cx.stroke();
+  cx.beginPath(); cx.moveTo(-5,-28); cx.lineTo(1,-27); cx.stroke();
+  /* green X eyes */
+  cx.strokeStyle = C.green; cx.lineWidth=3; cx.lineCap='round';
+  function X(ex,ey,s){
+    cx.beginPath(); cx.moveTo(ex-s,ey-s); cx.lineTo(ex+s,ey+s); cx.stroke();
+    cx.beginPath(); cx.moveTo(ex+s,ey-s); cx.lineTo(ex-s,ey+s); cx.stroke();
+  }
+  X(-7,-16,3.6); X(7,-16,3.6);
+  /* stitched grin */
+  cx.strokeStyle = '#3a3344'; cx.lineWidth=2;
+  cx.beginPath(); cx.moveTo(-8,-7); cx.quadraticCurveTo(0,-3, 8,-7); cx.stroke();
+  for(let i=-6;i<=6;i+=3){
+    cx.beginPath(); cx.moveTo(i,-7.5+ (Math.abs(i)<3?2.2:1.2)); cx.lineTo(i,-3.5+(Math.abs(i)<3?1.2:0.2)); cx.stroke();
+  }
+
+  /* wide-brim witch-doctor hat */
+  cx.fillStyle = '#14111b';
+  cx.beginPath();
+  cx.ellipse(0,-30, 24, 6.5, -0.06, 0, 7);
+  cx.fill();
+  cx.beginPath();
+  cx.moveTo(-13,-31); cx.lineTo(-10,-48); cx.lineTo(12,-46); cx.lineTo(13,-31);
+  cx.closePath(); cx.fill();
+  /* purple hat band */
+  cx.fillStyle = C.purple;
+  cx.fillRect(-12,-37, 25, 5);
+  cx.fillStyle = C.gold;
+  cx.fillRect(2,-37, 4, 5);
+
+  cx.restore();
+}
+
+/* sprite wrapper: official Doc art when loaded, vector fallback otherwise */
+function drawDocSprite(x, y, scale, face, walk, hurt, thunder){
+  if(!docReady){ drawDoc(x, y, scale, face, walk, hurt, thunder); return; }
+  cx.save();
+  cx.translate(x, y + Math.sin(walk)*2.5);
+  cx.rotate(Math.sin(walk)*0.05);
+  cx.scale(-face, 1);   // Doc art natively faces left; face=1 means moving right
+  if(hurt>0 && Math.floor(hurt*20)%2===0) cx.globalAlpha *= 0.45;
+  if(thunder>0){
+    cx.shadowColor = 'rgba(242,193,46,0.9)';
+    cx.shadowBlur = 26;
+  }
+  const sz = 104*scale;
+  cx.drawImage(docImg, -sz/2, -sz*0.60, sz, sz);
+  cx.restore();
+}
+
+/* ---------- electricity ---------- */
+function drawLightning(x1,y1,x2,y2,amp,width,alpha){
+  const dx=x2-x1, dy=y2-y1, len=Math.hypot(dx,dy)||1;
+  const n = Math.max(3, Math.floor(len/26));
+  const nx = -dy/len, ny = dx/len;
+  const pts=[[x1,y1]];
+  for(let i=1;i<n;i++){
+    const t=i/n;
+    const off=(Math.random()*2-1)*amp*(1-Math.abs(t-0.5)*1.2);
+    pts.push([x1+dx*t+nx*off, y1+dy*t+ny*off]);
+  }
+  pts.push([x2,y2]);
+  cx.globalAlpha = alpha;
+  cx.lineCap='round'; cx.lineJoin='round';
+  cx.strokeStyle='rgba(242,193,46,0.55)'; cx.lineWidth=width*2.6;
+  cx.beginPath(); pts.forEach((p,i)=> i?cx.lineTo(p[0],p[1]):cx.moveTo(p[0],p[1])); cx.stroke();
+  cx.strokeStyle='#fff7d6'; cx.lineWidth=width;
+  cx.beginPath(); pts.forEach((p,i)=> i?cx.lineTo(p[0],p[1]):cx.moveTo(p[0],p[1])); cx.stroke();
+  cx.globalAlpha = 1;
+}
+function drawArcs(){
+  /* re-jittered every frame so the bolts crackle */
+  for(const a of arcs) drawLightning(a.x1,a.y1,a.x2,a.y2, 14, 2.5, clamp(a.life/0.4,0,1));
+}
+function drawShocks(){
+  for(const s of shocks){
+    const p = s.t/0.5, e = 1-Math.pow(1-p,3);   // ease-out
+    const r = 40 + e*620;
+    cx.globalAlpha = (1-p)*0.9;
+    cx.strokeStyle = C.gold;   cx.lineWidth = 10*(1-p)+2;
+    cx.beginPath(); cx.arc(s.x,s.y,r,0,7); cx.stroke();
+    cx.strokeStyle = '#fff7d6'; cx.lineWidth = 3*(1-p)+1;
+    cx.beginPath(); cx.arc(s.x,s.y,r*0.92,0,7); cx.stroke();
+    cx.globalAlpha = 1;
+  }
+}
+
+/* ---------- the Z's ---------- */
+function drawZGlyph(z){
+  const {x,y,r,wob,hitT,boss,hp,maxHp,rush} = z;
+  cx.save();
+  cx.translate(x,y);
+  cx.rotate(Math.sin(wob)*0.18);
+  const col = hitT>0 ? '#ffffff' : (boss? C.sleepyDk : rush? '#c9a9f0' : C.sleepy);
+  /* soft sleepy glow */
+  cx.fillStyle = boss? 'rgba(93,113,148,0.25)' : 'rgba(143,163,196,0.18)';
+  cx.beginPath(); cx.arc(0,2,r*1.25,0,7); cx.fill();
+  /* the Z */
+  cx.fillStyle = col;
+  cx.strokeStyle = 'rgba(23,20,28,0.55)';
+  cx.lineWidth = boss? 4:2.5;
+  cx.font = '900 '+(r*2.3)+'px "Archivo Black", sans-serif';
+  cx.textAlign='center'; cx.textBaseline='middle';
+  cx.strokeText('Z', 0, 0);
+  cx.fillText('Z', 0, 0);
+  /* sleepy droopy eyes on the Z */
+  cx.strokeStyle = C.ink; cx.lineWidth = boss? 3:2; cx.lineCap='round';
+  const ey = -r*0.32, eo = r*0.34;
+  cx.beginPath(); cx.moveTo(-eo-r*0.16, ey); cx.quadraticCurveTo(-eo, ey+r*0.16, -eo+r*0.16, ey); cx.stroke();
+  cx.beginPath(); cx.moveTo(eo-r*0.16, ey); cx.quadraticCurveTo(eo, ey+r*0.16, eo+r*0.16, ey); cx.stroke();
+  if(boss){
+    /* nightcap on the Big Snooze */
+    cx.fillStyle = C.purpleDk;
+    cx.beginPath();
+    cx.moveTo(-r*0.7,-r*0.75); cx.quadraticCurveTo(0,-r*1.7, r*0.9,-r*0.9);
+    cx.quadraticCurveTo(r*1.3,-r*0.7, r*1.4,-r*0.35);
+    cx.lineTo(r*0.8,-r*0.55); cx.quadraticCurveTo(0,-r*1.1, -r*0.5,-r*0.55);
+    cx.closePath(); cx.fill();
+    cx.fillStyle = C.gold;
+    cx.beginPath(); cx.arc(r*1.4,-r*0.32, r*0.18, 0, 7); cx.fill();
+    /* hp pips */
+    const wbar = r*1.6;
+    cx.fillStyle = 'rgba(23,20,28,0.6)';
+    cx.fillRect(-wbar/2, r*1.25, wbar, 6);
+    cx.fillStyle = C.gold;
+    cx.fillRect(-wbar/2, r*1.25, wbar*clamp(hp/maxHp,0,1), 6);
+  }
+  cx.restore();
+}
+function drawZs(){
+  for(const z of zs) drawZGlyph(z);
+}
+
+/* ---------- VIPs (FPO escort art; swap freely) ---------- */
+function drawVips(){
+  for(const v of vips){
+    const pct = clamp(v.wake/v.maxWake, 0, 1);
+    const flash = v.hurtT>0 && Math.floor(v.hurtT*20)%2===0;
+    const bob = Math.sin(v.bob*3)*2;
+    const ringCol = pct>0.5 ? '#7ee08a' : pct>0.25 ? C.gold : '#e0563c';
+    cx.save();
+    cx.translate(v.x, v.y+bob);
+
+    const img = v.type ? v.type.img : vipImg;
+    const accent = v.type ? v.type.accent : '#ff9d52';
+    if(img && img.complete && img.naturalWidth){
+      const h = VIP_H, w = h * (img.naturalWidth/img.naturalHeight);
+      /* accent ground glow — the brand's color, present but subtle */
+      cx.fillStyle = accent; cx.globalAlpha = 0.18;
+      cx.beginPath(); cx.ellipse(0, h*0.33, w*0.34, h*0.13, 0, 0, 7); cx.fill();
+      cx.globalAlpha = 1;
+      /* shadow */
+      cx.fillStyle = 'rgba(0,0,0,0.3)';
+      cx.beginPath(); cx.ellipse(0, h*0.34, w*0.24, h*0.08, 0, 0, 7); cx.fill();
+      /* the icon sprite (blink on hit) */
+      if(flash) cx.globalAlpha = 0.5;
+      cx.drawImage(img, -w/2, -h*0.6, w, h);
+      cx.globalAlpha = 1;
+      /* drowsy z's when low */
+      if(pct < 0.4){
+        cx.fillStyle = C.sleepy; cx.font = '900 13px "Archivo Black", sans-serif'; cx.textAlign='center';
+        cx.fillText('z', w*0.32, -h*0.52 - (v.bob*14)%14);
+      }
+      /* name tag + wakefulness bar above the sprite */
+      const bw = 34, bx = -bw/2, by = -h*0.6 - 10;
+      if(v.type){
+        cx.fillStyle = accent; cx.font = '700 8px Montserrat'; cx.textAlign = 'center';
+        cx.fillText(v.type.name, 0, by-3);
+      }
+      cx.fillStyle = 'rgba(23,20,28,0.75)'; cx.fillRect(bx-1, by-1, bw+2, 5);
+      cx.fillStyle = ringCol; cx.fillRect(bx, by, bw*pct, 3);
+    } else {
+      /* vector fallback */
+      cx.fillStyle = 'rgba(0,0,0,0.28)';
+      cx.beginPath(); cx.ellipse(0, v.r*0.95, v.r*0.85, v.r*0.3, 0, 0, 7); cx.fill();
+      cx.strokeStyle = ringCol; cx.globalAlpha = 0.5;
+      cx.lineWidth = 2; cx.beginPath(); cx.arc(0,0, v.r+6, 0, 7); cx.stroke();
+      cx.globalAlpha = 1;
+      cx.fillStyle = flash ? '#ffffff' : '#ff9d52';
+      cx.beginPath(); cx.ellipse(0, v.r*0.25, v.r*0.8, v.r*0.7, 0, 0, 7); cx.fill();
+      cx.fillStyle = flash ? '#ffffff' : '#ffd9b0';
+      cx.beginPath(); cx.arc(0, -v.r*0.45, v.r*0.55, 0, 7); cx.fill();
+      const bw = 30, bx = -bw/2, by = -v.r-12;
+      cx.fillStyle = 'rgba(23,20,28,0.7)'; cx.fillRect(bx-1, by-1, bw+2, 5);
+      cx.fillStyle = ringCol; cx.fillRect(bx, by, bw*pct, 3);
+    }
+    cx.restore();
+  }
+}
+
+/* ---------- boss hazards ---------- */
+function drawPuddles(){
+  for(const p of puddles){
+    const grow = clamp(p.t/p.form, 0, 1);
+    const fade = p.t > p.life-1 ? clamp(p.life-p.t, 0, 1) : 1;
+    const r = p.r*grow;
+    cx.globalAlpha = 0.5*fade;
+    cx.fillStyle = '#b9a06a';
+    cx.beginPath(); cx.ellipse(p.x, p.y, r, r*0.5, 0, 0, 7); cx.fill();
+    cx.globalAlpha = 0.32*fade;
+    cx.fillStyle = '#6b5a36';
+    cx.beginPath(); cx.ellipse(p.x, p.y, r*0.7, r*0.35, 0, 0, 7); cx.fill();
+    // a couple of drowsy z's rising off it
+    if(p.t>p.form){
+      cx.globalAlpha = 0.4*fade;
+      cx.fillStyle = C.sleepy;
+      cx.font = '900 13px "Archivo Black", sans-serif';
+      cx.textAlign = 'center';
+      cx.fillText('z', p.x + Math.sin(p.t*3)*8, p.y - 6 - (p.t*10)%18);
+    }
+    cx.globalAlpha = 1;
+  }
+}
+function drawSandballs(){
+  for(const sb of sandballs){
+    const k = clamp(sb.t/sb.dur, 0, 1);
+    const x = sb.sx + (sb.tx-sb.sx)*k;
+    const y = sb.sy + (sb.ty-sb.sy)*k - Math.sin(k*Math.PI)*90;  // arc
+    // landing reticle
+    cx.globalAlpha = 0.5;
+    cx.strokeStyle = '#c9b27a'; cx.lineWidth = 2;
+    cx.beginPath(); cx.ellipse(sb.tx, sb.ty, 40*k, 20*k, 0, 0, 7); cx.stroke();
+    cx.globalAlpha = 1;
+    // the sand wad
+    cx.fillStyle = '#d8c184';
+    cx.beginPath(); cx.arc(x, y, 9, 0, 7); cx.fill();
+    cx.fillStyle = '#a98f52';
+    cx.beginPath(); cx.arc(x-2, y+2, 4, 0, 7); cx.fill();
+  }
+}
+
+/* ---------- boss FPO art (vector placeholders; swap for supplied graphics) ---------- */
+function drawBosses(){ for(const b of bosses) drawBoss(b); }
+function drawBoss(b){
+  cx.save();
+  cx.translate(b.x, b.y);
+  // ground shadow
+  cx.fillStyle = 'rgba(0,0,0,0.3)';
+  cx.beginPath(); cx.ellipse(0, b.r*0.82, b.r*0.9, b.r*0.28, 0, 0, 7); cx.fill();
+  const flash = b.hitT>0;
+  if(b.type==='lazyass') drawLazyAss(b, flash);
+  else if(b.type==='sandman') drawSandman(b, flash);
+  else if(b.type==='baron') drawBaron(b, flash);
+  cx.restore();
+}
+function drawLazyAss(b, flash){
+  const R = b.r, bray = b.brayT>0;
+  cx.save(); cx.scale(b.face, 1);
+  const body = flash ? '#ffffff' : '#9a8f7a';
+  const dark = flash ? '#ffffff' : '#6f6657';
+  // body
+  cx.fillStyle = body;
+  cx.beginPath(); cx.ellipse(-R*0.15, R*0.15, R*0.95, R*0.7, 0, 0, 7); cx.fill();
+  // head
+  cx.beginPath(); cx.ellipse(R*0.7, -R*0.2, R*0.5, R*0.42, 0.2, 0, 7); cx.fill();
+  // snout
+  cx.fillStyle = dark;
+  cx.beginPath(); cx.ellipse(R*1.05, 0, R*0.3, R*0.24, 0.2, 0, 7); cx.fill();
+  // ears (long, floppy)
+  cx.fillStyle = body;
+  cx.beginPath(); cx.ellipse(R*0.5, -R*0.7, R*0.13, R*0.34, -0.3, 0, 7); cx.fill();
+  cx.beginPath(); cx.ellipse(R*0.78, -R*0.66, R*0.12, R*0.32, 0.1, 0, 7); cx.fill();
+  // closed sleepy eye
+  cx.strokeStyle = '#2a2620'; cx.lineWidth = 3; cx.lineCap='round';
+  cx.beginPath(); cx.arc(R*0.72, -R*0.22, R*0.12, 0.2, Math.PI-0.2); cx.stroke();
+  // nostril
+  cx.fillStyle = '#3a342c';
+  cx.beginPath(); cx.arc(R*1.12, R*0.02, R*0.05, 0, 7); cx.fill();
+  // mouth — open & spitting Z's when braying
+  if(bray){
+    cx.fillStyle = '#3a2c2c';
+    cx.beginPath(); cx.ellipse(R*1.0, R*0.18, R*0.16, R*0.2, 0, 0, 7); cx.fill();
+    cx.fillStyle = C.sleepy;
+    cx.font = '900 '+Math.round(R*0.4)+'px "Archivo Black", sans-serif';
+    cx.textAlign='center';
+    cx.fillText('Z', R*1.4, R*0.05);
+    cx.fillText('Z', R*1.7, -R*0.25);
+  }
+  // Mardi Gras beads
+  cx.scale(1,1);
+  const beadCols = [C.gold, C.green, C.purpleLt];
+  for(let i=0;i<7;i++){
+    cx.fillStyle = beadCols[i%3];
+    const a = -0.5 + i*0.32;
+    cx.beginPath(); cx.arc(R*0.35 + Math.cos(a)*R*0.5, -R*0.05 + Math.sin(a)*R*0.45, R*0.07, 0, 7); cx.fill();
+  }
+  cx.restore();
+}
+function drawSandman(b, flash){
+  const R = b.r;
+  cx.save(); cx.scale(b.face, 1);
+  const robe = flash ? '#ffffff' : '#3b3550';
+  // robe body (triangle)
+  cx.fillStyle = robe;
+  cx.beginPath();
+  cx.moveTo(0, -R*0.9); cx.lineTo(R*0.85, R*0.85); cx.lineTo(-R*0.85, R*0.85);
+  cx.closePath(); cx.fill();
+  // hood opening
+  cx.fillStyle = flash ? '#ffffff' : '#1c1830';
+  cx.beginPath(); cx.ellipse(0, -R*0.5, R*0.32, R*0.4, 0, 0, 7); cx.fill();
+  // glowing eyes
+  cx.fillStyle = flash ? '#222' : '#e6c45a';
+  cx.beginPath(); cx.arc(-R*0.12, -R*0.5, R*0.07, 0, 7); cx.fill();
+  cx.beginPath(); cx.arc(R*0.12, -R*0.5, R*0.07, 0, 7); cx.fill();
+  // sand sack (arm)
+  cx.fillStyle = flash ? '#fff' : '#c9b27a';
+  cx.beginPath(); cx.arc(R*0.7, R*0.1, R*0.22, 0, 7); cx.fill();
+  cx.strokeStyle = '#8a7440'; cx.lineWidth = 2;
+  cx.beginPath(); cx.moveTo(R*0.62,-R*0.06); cx.lineTo(R*0.78,-R*0.06); cx.stroke();
+  // drifting sand sparkles
+  cx.fillStyle = 'rgba(216,193,132,0.8)';
+  for(let i=0;i<4;i++){
+    const a = b.t*2 + i*1.6;
+    cx.beginPath(); cx.arc(R*0.7+Math.cos(a)*R*0.4, R*0.1+Math.sin(a)*R*0.4, 1.8, 0, 7); cx.fill();
+  }
+  cx.restore();
+}
+function drawBaron(b, flash){
+  const R = b.r;
+  // dark aura
+  cx.fillStyle = 'rgba(124,77,196,0.18)';
+  cx.beginPath(); cx.arc(0, 0, R*1.15 + Math.sin(b.t*4)*4, 0, 7); cx.fill();
+  cx.save(); cx.scale(b.face, 1);
+  const cloak = flash ? '#ffffff' : '#2a2140';
+  // cloak
+  cx.fillStyle = cloak;
+  cx.beginPath();
+  cx.moveTo(0,-R*0.2); cx.lineTo(R*0.8, R*0.9); cx.lineTo(-R*0.8, R*0.9);
+  cx.closePath(); cx.fill();
+  // skull head
+  cx.fillStyle = flash ? '#ffffff' : '#e9e2d4';
+  cx.beginPath(); cx.ellipse(0, -R*0.45, R*0.4, R*0.4, 0, 0, 7); cx.fill();
+  // green X eyes (Doc's dark mirror)
+  cx.strokeStyle = C.green; cx.lineWidth = 4; cx.lineCap='round';
+  const ex=R*0.16, ey=-R*0.48, s=R*0.12;
+  cx.beginPath(); cx.moveTo(-ex-s,ey-s); cx.lineTo(-ex+s,ey+s); cx.stroke();
+  cx.beginPath(); cx.moveTo(-ex+s,ey-s); cx.lineTo(-ex-s,ey+s); cx.stroke();
+  cx.beginPath(); cx.moveTo(ex-s,ey-s); cx.lineTo(ex+s,ey+s); cx.stroke();
+  cx.beginPath(); cx.moveTo(ex+s,ey-s); cx.lineTo(ex-s,ey+s); cx.stroke();
+  // grin
+  cx.strokeStyle = '#3a3344'; cx.lineWidth = 2.5;
+  cx.beginPath(); cx.moveTo(-R*0.18,-R*0.28); cx.quadraticCurveTo(0,-R*0.18, R*0.18,-R*0.28); cx.stroke();
+  // top hat
+  cx.fillStyle = '#15111c';
+  cx.beginPath(); cx.ellipse(0,-R*0.78, R*0.5, R*0.12, 0, 0, 7); cx.fill();
+  cx.fillRect(-R*0.3, -R*1.25, R*0.6, R*0.5);
+  cx.fillStyle = C.purple; cx.fillRect(-R*0.3, -R*0.92, R*0.6, R*0.12);
+  // staff
+  cx.strokeStyle = C.goldDk; cx.lineWidth = 4;
+  cx.beginPath(); cx.moveTo(R*0.7, R*0.7); cx.lineTo(R*0.55,-R*0.7); cx.stroke();
+  cx.fillStyle = C.gold;
+  cx.beginPath(); cx.arc(R*0.54,-R*0.78, R*0.12, 0, 7); cx.fill();
+  cx.restore();
+}
+function drawCurse(){
+  if(cursedT<=0) return;
+  const a = 0.12 + Math.sin(time*8)*0.05;
+  const g = cx.createRadialGradient(W/2,H/2,140, W/2,H/2,560);
+  g.addColorStop(0,'rgba(124,77,196,0)');
+  g.addColorStop(1,'rgba(124,77,196,'+a+')');
+  cx.fillStyle = g; cx.fillRect(0,0,W,H);
+}
+
+/* ---------- ThunderStix pickup ---------- */
+function drawStixPack(x,y,t,scale,flavor){
+  const bob = Math.sin(t*3)*4;
+  cx.save();
+  cx.translate(x, y+bob);
+  cx.scale(scale||1, scale||1);
+  cx.rotate(Math.sin(t*2)*0.12);
+  cx.rotate(40*Math.PI/180);   // 40° clockwise base tilt on the packaging
+  /* glow ring */
+  const pul = 1+Math.sin(t*5)*0.12;
+  cx.strokeStyle = 'rgba(242,193,46,0.45)';
+  cx.lineWidth = 3;
+  cx.beginPath(); cx.arc(0,0, 42*pul, 0, 7); cx.stroke();
+  cx.fillStyle = 'rgba(242,193,46,0.10)';
+  cx.beginPath(); cx.arc(0,0, 42*pul, 0, 7); cx.fill();
+  const img = stixImgs[flavor|0];
+  if(img && img.ready){
+    /* official flavor label, rotated upright like a stick pack */
+    cx.rotate(-0.35);
+    cx.rotate(-Math.PI/2);
+    const ph = 78, pw = ph*114/303;
+    cx.shadowColor = 'rgba(13,11,18,0.8)';
+    cx.shadowBlur = 8;
+    cx.drawImage(img, -ph/2, -pw/2, ph, pw);
+  } else {
+    /* fallback: vector stick pack — purple wrapper, gold cap */
+    cx.rotate(-0.5);
+    cx.fillStyle = C.purpleDk;
+    cx.fillRect(-9,-24, 18, 48);
+    cx.fillStyle = C.purple;
+    cx.fillRect(-9,-24, 18, 10);
+    cx.fillRect(-9, 14, 18, 10);
+    cx.fillStyle = C.gold;
+    cx.fillRect(-9,-26, 18, 4);
+    cx.fillRect(-9, 22, 18, 4);
+    cx.fillStyle = C.gold;
+    cx.beginPath();
+    cx.moveTo(2,-12); cx.lineTo(-5,2); cx.lineTo(-1,2); cx.lineTo(-3,12);
+    cx.lineTo(5,-2); cx.lineTo(1,-2); cx.closePath();
+    cx.fill();
+  }
+  cx.restore();
+}
+function drawStix(){
+  for(const s of stix){
+    drawStixPack(s.x, s.y, s.t + s.bob, 1, s.flavor);
+    /* expiry blink */
+    if(s.life<2.5 && Math.floor(s.life*5)%2===0){
+      cx.globalAlpha = 0.6;
+      cx.fillStyle = C.gold;
+      cx.font = '700 12px Montserrat';
+      cx.textAlign='center';
+      cx.fillText('GRAB IT!', s.x, s.y-58);
+      cx.globalAlpha = 1;
+    }
+  }
+}
+
+/* ---------- bolts ---------- */
+function drawBolts(){
+  cx.lineCap='round';
+  for(const b of bolts){
+    const ang = Math.atan2(b.vy,b.vx);
+    cx.save();
+    cx.translate(b.x,b.y);
+    cx.rotate(ang);
+    const jag = (i)=> Math.sin(b.seed + i*7 + performance.now()*0.05)*4;
+    cx.strokeStyle = b.pierce>1 ? '#fff3c4' : C.gold;
+    cx.lineWidth = b.pierce>1 ? 5 : 3.5;
+    cx.beginPath();
+    cx.moveTo(-18, jag(0));
+    cx.lineTo(-9, jag(1));
+    cx.lineTo(-2, jag(2));
+    cx.lineTo(6, jag(3));
+    cx.lineTo(14, 0);
+    cx.stroke();
+    cx.strokeStyle = 'rgba(242,193,46,0.35)';
+    cx.lineWidth = 9;
+    cx.beginPath(); cx.moveTo(-16,0); cx.lineTo(12,0); cx.stroke();
+    cx.restore();
+  }
+}
+
+function drawPlayer(){
+  /* thunder-mode aura + ambient sparks */
+  if(player.thunder>0){
+    cx.strokeStyle = 'rgba(242,193,46,'+(0.25+Math.sin(performance.now()*0.02)*0.12)+')';
+    cx.lineWidth = 4;
+    cx.beginPath(); cx.arc(player.x, player.y-6, 46, 0, 7); cx.stroke();
+    if(Math.random()<0.35){
+      const a1 = rnd(0,6.28), a2 = a1 + rnd(0.8,2.4), r1 = rnd(34,50), r2 = rnd(34,56);
+      drawLightning(
+        player.x+Math.cos(a1)*r1, player.y-6+Math.sin(a1)*r1,
+        player.x+Math.cos(a2)*r2, player.y-6+Math.sin(a2)*r2,
+        7, 1.5, 0.8);
+    }
+  }
+  drawDocSprite(player.x, player.y, 1.05, player.face, player.walk, player.hurtT, player.thunder);
+}
+
+function drawParticles(){
+  for(const p of parts){
+    cx.globalAlpha = clamp(p.life/p.max,0,1);
+    cx.fillStyle = p.color;
+    cx.beginPath(); cx.arc(p.x,p.y,p.r,0,7); cx.fill();
+  }
+  cx.globalAlpha = 1;
+}
+function drawFloats(){
+  cx.textAlign='center';
+  for(const f of floats){
+    cx.globalAlpha = clamp(f.life,0,1);
+    cx.font = '400 '+f.size+'px Bangers, cursive';
+    cx.fillStyle = f.color;
+    cx.strokeStyle = 'rgba(23,20,28,0.7)'; cx.lineWidth=3;
+    cx.strokeText(f.txt, f.x, f.y);
+    cx.fillText(f.txt, f.x, f.y);
+  }
+  cx.globalAlpha = 1;
+}
+
+/* ---------- HUD ---------- */
+function drawHUD(){
+  /* top bar */
+  cx.fillStyle = 'rgba(23,20,28,0.78)';
+  cx.fillRect(0,0,W,64);
+  cx.strokeStyle = C.purpleDk; cx.lineWidth=2;
+  cx.beginPath(); cx.moveTo(0,64); cx.lineTo(W,64); cx.stroke();
+
+  /* score */
+  cx.textAlign='left';
+  cx.font = '400 30px Bangers, cursive';
+  cx.fillStyle = C.gold;
+  cx.fillText('SCORE '+score, 18, 40);
+  cx.font = '700 12px Montserrat';
+  cx.fillStyle = C.purpleLt;
+  cx.fillText('BEST '+best, 19, 56);
+  cx.fillStyle = C.bone;
+  cx.fillText('TIME '+fmtTime(elapsed), 120, 56);
+  if(vips.length || vipsLost){
+    cx.fillStyle = '#ff9d52';
+    cx.fillText('VIPs '+vips.length, 205, 56);
+  }
+
+  /* wave */
+  cx.textAlign='center';
+  cx.font = '400 26px Bangers, cursive';
+  cx.fillStyle = C.greenLt;
+  cx.fillText('WAVE '+wave, W/2, 38);
+
+  /* combo */
+  if(combo>=3){
+    const mult = 1 + Math.min(7, Math.floor(combo/3));
+    cx.font = '400 22px Bangers, cursive';
+    cx.fillStyle = C.gold;
+    cx.fillText('COMBO x'+mult, W/2, 58);
+  }
+
+  /* energy bar */
+  const bw = 280, bx = W-bw-20, by = 22;
+  cx.textAlign='left';
+  cx.font = '700 11px Montserrat';
+  cx.fillStyle = C.bone;
+  cx.fillText(player.thunder>0 ? '⚡ THUNDER MODE' : 'ENERGY', bx, by-6);
+  cx.fillStyle = 'rgba(244,239,230,0.12)';
+  rr(bx, by, bw, 18, 9); cx.fill();
+  const pct = player.energy/player.maxEnergy;
+  const barCol = player.thunder>0 ? C.gold : pct>0.5 ? C.green : pct>0.25 ? C.gold : '#e0563c';
+  cx.fillStyle = barCol;
+  if(pct>0.02){ rr(bx+2, by+2, (bw-4)*clamp(pct,0,1), 14, 7); cx.fill(); }
+  cx.strokeStyle = C.purple; cx.lineWidth=2;
+  rr(bx, by, bw, 18, 9); cx.stroke();
+  if(pct<0.25 && player.thunder<=0 && Math.floor(time*3)%2===0){
+    cx.fillStyle = '#e0563c';
+    cx.font = '700 11px Montserrat';
+    cx.textAlign='right';
+    cx.fillText('FIND THUNDERSTIX!', bx+bw, by+32);
+  }
+
+  /* boss health bar (just under the top bar) */
+  if(bosses.length){
+    const b = bosses[bosses.length-1];
+    const hbw = 440, hbx = (W-hbw)/2, hby = 80;
+    cx.fillStyle = 'rgba(23,20,28,0.82)';
+    rr(hbx-6, hby-20, hbw+12, 34, 8); cx.fill();
+    cx.textAlign='center';
+    cx.font = '400 20px Bangers, cursive';
+    cx.fillStyle = C.gold;
+    cx.fillText(b.cfg.name, W/2, hby-3);
+    cx.fillStyle = 'rgba(244,239,230,0.12)';
+    rr(hbx, hby, hbw, 9, 4); cx.fill();
+    const hp = clamp(b.hp/b.maxHp, 0, 1);
+    cx.fillStyle = b.hitT>0 ? '#ffffff' : '#e0563c';
+    if(hp>0){ rr(hbx, hby, hbw*hp, 9, 4); cx.fill(); }
+    cx.strokeStyle = C.purple; cx.lineWidth = 2;
+    rr(hbx, hby, hbw, 9, 4); cx.stroke();
+  }
+}
+function rr(x,y,w,h,r){
+  cx.beginPath();
+  cx.moveTo(x+r,y);
+  cx.arcTo(x+w,y,x+w,y+h,r);
+  cx.arcTo(x+w,y+h,x,y+h,r);
+  cx.arcTo(x,y+h,x,y,r);
+  cx.arcTo(x,y,x+w,y,r);
+  cx.closePath();
+}
+
+/* ---------- drowsiness FX: eyelids close as energy fades ---------- */
+function drawDrowsiness(){
+  const pct = player.energy/player.maxEnergy;
+  if(pct < 0.45 && player.thunder<=0){
+    const droop = (0.45-pct)/0.45;       // 0..1
+    const lid = droop*droop * H*0.30;
+    const g1 = cx.createLinearGradient(0,0,0,lid+40);
+    g1.addColorStop(0,'rgba(10,8,14,'+(0.85*droop+0.1)+')');
+    g1.addColorStop(1,'rgba(10,8,14,0)');
+    cx.fillStyle = g1; cx.fillRect(0,0,W,lid+40);
+    const g2 = cx.createLinearGradient(0,H-lid-40,0,H);
+    g2.addColorStop(0,'rgba(10,8,14,0)');
+    g2.addColorStop(1,'rgba(10,8,14,'+(0.85*droop+0.1)+')');
+    cx.fillStyle = g2; cx.fillRect(0,H-lid-40,W,lid+40);
+    /* drifting zzz at edges */
+    if(Math.random()<droop*0.1){
+      floats.push({x:rnd(60,W-60), y:rnd(100,H-60), txt:'z', color:C.sleepy, size:rnd(14,26), life:1});
+    }
+    /* desaturating vignette */
+    cx.fillStyle = 'rgba(93,113,148,'+(droop*0.12)+')';
+    cx.fillRect(0,0,W,H);
+  }
+}
+
+/* ---------- ambient ZZZ for menus ---------- */
+function drawAmbientZzz(){
+  cx.textAlign='center';
+  for(const z of zzz){
+    cx.globalAlpha = 0.25*z.a;
+    cx.font = '900 '+z.s+'px "Archivo Black", sans-serif';
+    cx.fillStyle = C.sleepy;
+    cx.fillText('Z', z.x + Math.sin(z.wob)*14, z.y);
+  }
+  cx.globalAlpha = 1;
+}
+
+/* ---------- graffiti logo ---------- */
+function drawLogo(ycenter, scale){
+  cx.save();
+  cx.translate(W/2, ycenter);
+  cx.scale(scale, scale);
+  cx.textAlign='center';
+  const word = [
+    {ch:'V', col:C.gold,    dy:0,  rot:-0.06},
+    {ch:'U', col:C.purple,  dy:6,  rot:0.05},
+    {ch:'D', col:C.gold,    dy:-2, rot:-0.04},
+    {ch:'U', col:C.purple,  dy:5,  rot:0.06},
+  ];
+  let xoff = -96;
+  cx.font = '400 92px Bangers, cursive';
+  for(const L of word){
+    cx.save();
+    cx.translate(xoff, L.dy);
+    cx.rotate(L.rot);
+    cx.lineWidth = 10; cx.strokeStyle = '#0d0b12';
+    cx.strokeText(L.ch, 0, 0);
+    cx.fillStyle = L.col;
+    cx.fillText(L.ch, 0, 0);
+    cx.restore();
+    xoff += 62;
+  }
+  /* green RX tag */
+  cx.save();
+  cx.translate(120, 18);
+  cx.rotate(0.08);
+  cx.font = '400 44px Bangers, cursive';
+  cx.lineWidth = 7; cx.strokeStyle = '#0d0b12';
+  cx.strokeText('RX', 0, 0);
+  cx.fillStyle = C.green;
+  cx.fillText('RX', 0, 0);
+  cx.restore();
+  cx.restore();
+}
+
+/* ---------- title screen mini-icons ---------- */
+function drawKeycap(x, y, s, ch){
+  cx.fillStyle = '#241a3a';
+  rr(x-s/2, y-s/2, s, s, 0); cx.fill();
+  cx.strokeStyle = '#7a5fb0'; cx.lineWidth = 1.5;
+  rr(x-s/2, y-s/2, s, s, 0); cx.stroke();
+  cx.fillStyle = C.bone;
+  cx.font = '700 '+Math.round(s*0.55)+'px Montserrat';
+  cx.textAlign = 'center'; cx.textBaseline = 'middle';
+  cx.fillText(ch, x, y+1);
+  cx.textBaseline = 'alphabetic';
+}
+function drawMouseIcon(x, y){
+  cx.fillStyle = '#241a3a';
+  rr(x-12, y-17, 24, 34, 11); cx.fill();
+  cx.strokeStyle = '#7a5fb0'; cx.lineWidth = 1.5;
+  rr(x-12, y-17, 24, 34, 11); cx.stroke();
+  /* gold left button */
+  cx.fillStyle = C.gold;
+  cx.beginPath();
+  cx.moveTo(x-11, y-6); cx.lineTo(x-1, y-6); cx.lineTo(x-1, y-16);
+  cx.quadraticCurveTo(x-11, y-16, x-11, y-7);
+  cx.closePath(); cx.fill();
+  cx.strokeStyle = '#7a5fb0'; cx.lineWidth = 1.2;
+  cx.beginPath(); cx.moveTo(x, y-16); cx.lineTo(x, y-4); cx.stroke();
+}
+function drawZapIcon(x, y){
+  cx.fillStyle = '#241a3a';
+  rr(x-15, y-15, 30, 30, 0); cx.fill();
+  cx.strokeStyle = '#7a5fb0'; cx.lineWidth = 1.5;
+  rr(x-15, y-15, 30, 30, 0); cx.stroke();
+  /* cursor arrow */
+  cx.fillStyle = C.bone;
+  cx.beginPath();
+  cx.moveTo(x-4, y-6); cx.lineTo(x-4, y+8); cx.lineTo(x, y+4);
+  cx.lineTo(x+3, y+10); cx.lineTo(x+5, y+9); cx.lineTo(x+2, y+3);
+  cx.lineTo(x+7, y+2);
+  cx.closePath(); cx.fill();
+  /* click sparks */
+  cx.strokeStyle = C.gold; cx.lineWidth = 1.6; cx.lineCap = 'round';
+  cx.beginPath(); cx.moveTo(x-8, y-9); cx.lineTo(x-11, y-12); cx.stroke();
+  cx.beginPath(); cx.moveTo(x-2, y-10); cx.lineTo(x-2, y-13); cx.stroke();
+  cx.beginPath(); cx.moveTo(x+4, y-8); cx.lineTo(x+7, y-11); cx.stroke();
+}
+function drawPillBolt(x, y, col){
+  cx.fillStyle = '#1a1228';
+  cx.beginPath(); cx.arc(x, y, 13, 0, 7); cx.fill();
+  cx.strokeStyle = col; cx.lineWidth = 1.5;
+  cx.beginPath(); cx.arc(x, y, 13, 0, 7); cx.stroke();
+  cx.fillStyle = col;
+  cx.beginPath();
+  cx.moveTo(x+2, y-7); cx.lineTo(x-4, y+1); cx.lineTo(x-1, y+1);
+  cx.lineTo(x-2, y+7); cx.lineTo(x+4, y-1); cx.lineTo(x+1, y-1);
+  cx.closePath(); cx.fill();
+}
+
+function drawTitle(){
+  /* --- storm backdrop: supplied art, cover-fit --- */
+  if(bgReady){
+    const s = Math.max((W+40)/bgImg.width, (H+40)/bgImg.height);
+    const dw = bgImg.width*s, dh = bgImg.height*s;
+    cx.drawImage(bgImg, W/2-dw/2, H/2-dh/2, dw, dh);
+  } else {
+    cx.fillStyle = '#140d20'; cx.fillRect(-20,-20,W+40,H+40);
+  }
+  drawAmbientZzz();
+
+  /* --- edge lightning strikes --- */
+  for(const b of titleBolts){
+    const a = clamp(b.life/b.max, 0, 1);
+    /* sheet-flash on that side of the sky */
+    const fx = b.side ? W : 0;
+    const fg = cx.createLinearGradient(fx, 0, b.side ? W-260 : 260, 0);
+    fg.addColorStop(0, 'rgba(168,120,255,'+(a*0.22)+')');
+    fg.addColorStop(1, 'rgba(168,120,255,0)');
+    cx.fillStyle = fg;
+    cx.fillRect(b.side ? W-260 : 0, 0, 260, H);
+    /* the bolt itself: glow, mid, white-hot core */
+    cx.lineCap = 'round'; cx.lineJoin = 'round';
+    const passes = [
+      ['rgba(150,100,240,'+(a*0.30)+')', 10],
+      ['rgba(200,160,255,'+(a*0.75)+')', 4],
+      ['rgba(245,238,255,'+a+')', 1.8],
+    ];
+    for(const [col,wd] of passes){
+      cx.strokeStyle = col; cx.lineWidth = wd;
+      cx.beginPath();
+      b.pts.forEach((p,i)=> i ? cx.lineTo(p[0],p[1]) : cx.moveTo(p[0],p[1]));
+      cx.stroke();
+    }
+  }
+
+  /* --- vignette --- */
+  const vg = cx.createRadialGradient(W/2, H/2, 260, W/2, H/2, 660);
+  vg.addColorStop(0, 'rgba(10,6,18,0)');
+  vg.addColorStop(1, 'rgba(10,6,18,0.55)');
+  cx.fillStyle = vg;
+  cx.fillRect(-20,-20,W+40,H+40);
+
+  /* --- mouse parallax --- */
+  const px = clamp((player.aimX - W/2)/(W/2), -1, 1);
+  const py = clamp((player.aimY - H/2)/(H/2), -1, 1);
+
+  /* --- hero logo --- */
+  if(logoReady){
+    const lw = 430, lh = lw*489.59/936.6;   // ~225
+    cx.save();
+    cx.shadowColor = 'rgba(124,77,196,0.55)';
+    cx.shadowBlur = 30;
+    cx.drawImage(logoImg, W/2-lw/2 + px*7, 16 + py*4, lw, lh);
+    cx.restore();
+  } else {
+    drawLogo(120, 1.0);
+  }
+
+  /* --- headline block --- */
+  cx.textAlign = 'center';
+  cx.font = '400 44px Bangers, cursive';
+  cx.lineWidth = 8; cx.strokeStyle = '#0d0b12';
+  cx.strokeText("FIGHT THE Z'S", W/2, 288);
+  cx.fillStyle = '#f7f3ea';
+  cx.fillText("FIGHT THE Z'S", W/2, 288);
+
+  cx.font = '700 13px Montserrat';
+  cx.fillStyle = C.purpleLt;
+  cx.fillText('The Z’s are coming for your hustle. Zap ’em. Stay lit.', W/2, 312);
+
+  cx.font = '700 12px Montserrat';
+  cx.fillStyle = C.greenLt;
+  cx.fillText('⚡ Energy always drains — grab THUNDERSTIX to recharge & clear the screen', W/2, 334);
+
+  /* --- controls + pills locked to one shared block width (outer edges line up) --- */
+  const blockW = 500, blockX = (W-blockW)/2;   // 230..730
+  /* --- controls card --- */
+  const cw = blockW, ch = 88, cxr = blockX, cyr = 346;
+  cx.fillStyle = 'rgba(16,10,28,0.72)';
+  rr(cxr, cyr, cw, ch, 0); cx.fill();
+  cx.strokeStyle = 'rgba(124,77,196,0.45)'; cx.lineWidth = 1.5;
+  rr(cxr, cyr, cw, ch, 0); cx.stroke();
+
+  const cols = [W/2-150, W/2, W/2+150];
+  /* WASD keycaps */
+  drawKeycap(cols[0], cyr+22, 17, 'W');
+  drawKeycap(cols[0]-19, cyr+42, 17, 'A');
+  drawKeycap(cols[0],    cyr+42, 17, 'S');
+  drawKeycap(cols[0]+19, cyr+42, 17, 'D');
+  /* mouse + zap */
+  drawMouseIcon(cols[1], cyr+33);
+  drawZapIcon(cols[2], cyr+33);
+  /* green dot separators — centered in the panel's height */
+  const dotY = cyr + ch/2;
+  cx.fillStyle = C.green;
+  cx.beginPath(); cx.arc(W/2-75, dotY, 3.5, 0, 7); cx.fill();
+  cx.beginPath(); cx.arc(W/2+75, dotY, 3.5, 0, 7); cx.fill();
+  /* labels */
+  const labels = [['WASD / ARROWS','move'], ['MOUSE AIM','aim'], ['CLICK OR SPACE','zap']];
+  for(let i=0;i<3;i++){
+    cx.font = '700 11px Montserrat';
+    cx.fillStyle = C.gold;
+    cx.fillText(labels[i][0], cols[i], cyr+68);
+    cx.font = '600 10px Montserrat';
+    cx.fillStyle = 'rgba(244,239,230,0.75)';
+    cx.fillText(labels[i][1], cols[i], cyr+81);
+  }
+
+  /* --- feature pills (outer edges aligned to the block) --- */
+  const gap = 18, pw = (blockW-gap)/2, ph2 = 40, pyr = 442;
+  const pills = [
+    { x: blockX,        icon:'#e06cf0', title:'INSTANT ENERGY',        tcol:'#e06cf0', sub:'Zap in the moment. Stay in the zone.' },
+    { x: blockX+pw+gap, icon:C.gold,    title:'POWERED BY THUNDERSTIX', tcol:C.gold,    sub:'Sustained energy to keep you going' },
+  ];
+  for(const p of pills){
+    cx.fillStyle = 'rgba(16,10,28,0.72)';
+    rr(p.x, pyr, pw, ph2, 0); cx.fill();
+    cx.strokeStyle = 'rgba(124,77,196,0.35)'; cx.lineWidth = 1.2;
+    rr(p.x, pyr, pw, ph2, 0); cx.stroke();
+    drawPillBolt(p.x+22, pyr+ph2/2, p.icon);
+    cx.textAlign = 'left';
+    cx.font = '400 15px Bangers, cursive';
+    cx.fillStyle = p.tcol;
+    cx.fillText(p.title, p.x+42, pyr+17);
+    cx.font = '600 9.5px Montserrat';
+    cx.fillStyle = 'rgba(244,239,230,0.8)';
+    cx.fillText(p.sub, p.x+42, pyr+31);
+  }
+  cx.textAlign = 'center';
+
+  /* --- TAP TO PLAY: pulsing gold button with hover glow --- */
+  const bw2 = 300, bh2 = 46, bx2 = W/2-bw2/2, by2 = 487;
+  hoverPlay = player.aimX>bx2-8 && player.aimX<bx2+bw2+8 && player.aimY>by2-8 && player.aimY<by2+bh2+8;
+  const pulse = 0.5 + 0.5*Math.sin(time*3.2);
+  const sc = hoverPlay ? 1.05 : 1;
+  cx.save();
+  cx.translate(W/2, by2+bh2/2);
+  cx.scale(sc, sc);
+  cx.shadowColor = 'rgba(242,193,46,'+(hoverPlay? 0.95 : 0.45+pulse*0.3)+')';
+  cx.shadowBlur = hoverPlay ? 34 : 16+pulse*10;
+  const bg2 = cx.createLinearGradient(0, -bh2/2, 0, bh2/2);
+  bg2.addColorStop(0, '#ffe27a');
+  bg2.addColorStop(0.5, C.gold);
+  bg2.addColorStop(1, '#cf9714');
+  cx.fillStyle = bg2;
+  rr(-bw2/2, -bh2/2, bw2, bh2, 0); cx.fill();
+  cx.shadowBlur = 0;
+  cx.strokeStyle = '#8a6410'; cx.lineWidth = 2.5;
+  rr(-bw2/2, -bh2/2, bw2, bh2, 0); cx.stroke();
+  cx.transform(1, 0, -0.12, 1, 0, 0);   // slight italic skew
+  cx.font = '400 27px Bangers, cursive';
+  cx.fillStyle = '#241803';
+  cx.fillText('⚡ TAP TO PLAY ⚡', 0, 9);
+  cx.restore();
+
+  /* --- flanking mascot & pack (counter-parallax) --- */
+  drawDocSprite(108 + px*12, 352 + py*6, 1.95, 1, time*2, 0, 0);
+  drawStixPack(852 - px*12, 326 - py*6, time, 1.2, Math.floor(time/2.5)%3);
+}
+
+function drawGameOver(){
+  cx.textAlign='center';
+  cx.font = '400 72px Bangers, cursive';
+  cx.lineWidth=9; cx.strokeStyle='#0d0b12';
+  cx.strokeText('YOU DOZED OFF', W/2, 150);
+  cx.fillStyle = C.sleepy;
+  cx.fillText('YOU DOZED OFF', W/2, 150);
+
+  const fmt = n => n.toLocaleString('en-US');
+
+  /* hero: FINAL SCORE */
+  cx.font = '700 12px Montserrat';
+  cx.fillStyle = C.purpleLt;
+  cx.fillText('FINAL SCORE', W/2, 184);
+  cx.font = '400 46px Bangers, cursive';
+  cx.lineWidth = 7; cx.strokeStyle = '#0d0b12';
+  cx.strokeText(fmt(finalScore), W/2, 224);
+  cx.fillStyle = C.gold;
+  cx.fillText(fmt(finalScore), W/2, 224);
+
+  /* the formula, spelled out:  SCORE  x  SPEED BONUS  =  FINAL */
+  cx.font = '400 21px Bangers, cursive';
+  cx.fillStyle = C.bone;
+  cx.fillText('SCORE  '+fmt(score)+'      ⚡  SPEED BONUS  '+speedMult.toFixed(1)+'x', W/2, 256);
+  cx.font = '700 12px Montserrat';
+  cx.fillStyle = C.sleepy;
+  cx.fillText('TIME  '+fmtTime(elapsed)+'      PACE  '+fmt(pacePerMin)+' / min      BEST  '+fmt(bestFinal), W/2, 280);
+  cx.fillStyle = C.greenLt;
+  cx.fillText('WAVES '+wave+'   ·   Z’S ZAPPED '+zKills+'   ·   COMBO '+comboBest+'   ·   PERFECT SIPS '+perfectSips+'   ·   CLOSE SHAVES '+grazes, W/2, 298);
+  if(vips.length || vipsLost){
+    cx.fillStyle = '#ff9d52';
+    cx.fillText('VIPs PROTECTED '+vips.length+(vipsLost? '   ·   LOST '+vipsLost : ''), W/2, 316);
+  }
+
+  /* run grade */
+  if(grade){
+    const gx = W/2+310, gy = 200;
+    cx.font = '700 12px Montserrat';
+    cx.fillStyle = C.purpleLt;
+    cx.fillText('RUN GRADE', gx, gy-66);
+    cx.strokeStyle = grade.col; cx.lineWidth = 4;
+    cx.globalAlpha = 0.85;
+    cx.beginPath(); cx.arc(gx, gy, 56, 0, 7); cx.stroke();
+    cx.globalAlpha = 1;
+    if(grade.glow){ cx.shadowColor = grade.col; cx.shadowBlur = 24; }
+    cx.font = '400 76px Bangers, cursive';
+    cx.textBaseline = 'middle';
+    cx.lineWidth = 9; cx.strokeStyle = '#0d0b12';
+    cx.strokeText(grade.t, gx, gy+4);
+    cx.fillStyle = grade.col;
+    cx.fillText(grade.t, gx, gy+4);
+    cx.textBaseline = 'alphabetic';
+    cx.shadowBlur = 0;
+    cx.font = '400 20px Bangers, cursive';
+    cx.fillText(grade.label, gx, gy+86);
+  }
+
+  /* sleeping doc */
+  cx.save();
+  cx.translate(W/2, 360);
+  cx.rotate(1.45);
+  drawDocSprite(0,0, 1.5, 1, 0, 0, 0);
+  cx.restore();
+  cx.font = '900 30px "Archivo Black", sans-serif';
+  cx.fillStyle = C.sleepy;
+  const zf = Math.floor(time*1.5)%3;
+  cx.fillText('z'.repeat(zf+1), W/2+90, 310 - zf*8);
+
+  cx.fillStyle = C.bone;
+  cx.font = '700 15px Montserrat';
+  cx.fillText('Shoulda grabbed a ThunderStix ⚡', W/2, 440);
+
+  const blink = Math.floor(time*2)%2===0;
+  if(blink){
+    cx.font = '400 32px Bangers, cursive';
+    cx.fillStyle = C.gold;
+    cx.fillText('CLICK TO RUN IT BACK', W/2, 496);
+  }
+}
+
+/* ---------- main loop ---------- */
+/* debug handle (harmless in prod, handy for testing) */
+window.__vudu = {
+  get player(){ return player; },
+  get state(){ return state; },
+  get score(){ return score; },
+  stix(p){ if(p) perfectSips++; thunderClap(undefined, !!p); },
+  get stats(){ return {wave, zKills, grazes, perfectSips, comboBest, thunder:player.thunder, grade, score, elapsed:+elapsed.toFixed(1), finalScore, speedMult, pacePerMin}; },
+  drain(n){ player.energy = Math.max(0.5, player.energy - (n||50)); },
+  spawnStix,
+  setWave(n){ zs=[]; bosses=[]; puddles=[]; sandballs=[]; spawnQueue=0; wave=(n|0)-1; nextWave(); },
+  boss(type){ spawnBoss(type||'lazyass'); },
+  get bosses(){ return bosses.map(b=>({type:b.type, hp:Math.round(b.hp), max:b.maxHp})); },
+  vip(){ spawnVip(player.x+70, player.y); },
+  dozeVip(){ const v=vips[0]; if(v){ v.dozed=true; vipsLost++; vips=vips.filter(x=>!x.dozed); } },   // test the soft-fail outcome
+  get vips(){ return {count:vips.length, lost:vipsLost, wake:vips.map(v=>Math.round(v.wake))}; },
+  slowClap(){ thunderClap(); hitstop = 2.5; },   // long freeze-frame, for eyeballing the effect
+};
+
+let last = performance.now();
+function frame(now){
+  const rawDt = Math.min(0.033, (now-last)/1000);
+  last = now;
+  let dt = rawDt;
+  if(hitstop>0){ hitstop -= rawDt; dt *= 0.12; }  // freeze-frame impact
+  update(dt);
+  draw();
+  cv.style.cursor = state===ST.PLAY ? 'crosshair'
+                  : (state===ST.TITLE && hoverPlay) ? 'pointer' : 'default';
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

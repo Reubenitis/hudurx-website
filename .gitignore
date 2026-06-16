@@ -4,6 +4,9 @@ node_modules/
 # build output
 dist/
 
+# quarantined originals (kept locally, not deployed)
+__quarantine/
+
 # logs
 *.log
 npm-debug.log*
