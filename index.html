@@ -1,0 +1,465 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <title>HUDU℞ — ThunderStix · Fuel The Thunder</title>
+    <meta
+      name="description"
+      content="ThunderStix by HuduRX — a direct-to-mouth, high-voltage caffeinated power powder. No can. No water. No crash. Tear it, tip it back, and fuel the thunder."
+    />
+    <meta name="theme-color" content="#06040a" />
+    <meta property="og:title" content="HUDU℞ — ThunderStix · Fuel The Thunder" />
+    <meta
+      property="og:description"
+      content="Direct-to-mouth high-voltage caffeine. Prescribed by Doc Hudu. Zero sugar, zero crash, all thunder."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/img/thunderstix-packs.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <!-- ===== OVERLAYS ===== -->
+    <div class="grain" aria-hidden="true"></div>
+    <div class="scanlines" aria-hidden="true"></div>
+    <div class="vignette" aria-hidden="true"></div>
+    <div class="cursor" aria-hidden="true"><span class="cursor__dot"></span><span class="cursor__ring"></span></div>
+
+    <!-- ===== PRELOADER ===== -->
+    <div class="loader" id="loader" aria-hidden="true">
+      <div class="loader__inner">
+        <img class="loader__mark" src="/img/hudurx-logo.svg" width="190" height="112" alt="HuduRX" />
+        <div class="loader__word">
+          <span>F</span><span>U</span><span>E</span><span>L</span>
+          <span class="sp"></span>
+          <span>T</span><span>H</span><span>E</span>
+          <span class="sp"></span>
+          <span>T</span><span>H</span><span>U</span><span>N</span><span>D</span><span>E</span><span>R</span>
+        </div>
+        <div class="loader__bar"><i></i></div>
+        <div class="loader__pct"><span id="loaderPct">0</span>%</div>
+      </div>
+    </div>
+
+    <!-- ===== NAV ===== -->
+    <header class="nav" id="nav">
+      <a href="#top" class="nav__logo" data-magnetic>
+        <img class="brand-logo" src="/img/hudurx-logo.svg" width="190" height="112" alt="HuduRX" />
+      </a>
+      <nav class="nav__links" aria-label="Primary">
+        <a href="#product" data-link>Product</a>
+        <a href="#ritual" data-link>The Ritual</a>
+        <a href="#flavors" data-link>Flavors</a>
+        <a href="#hudu" data-link>Doc Hudu</a>
+        <a href="#shop" data-link>Shop</a>
+      </nav>
+      <a href="#shop" class="btn btn--nav" data-magnetic>
+        <span>Summon a Box</span>
+        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+      <button class="nav__burger" id="burger" aria-label="Menu"><i></i><i></i></button>
+    </header>
+
+    <main id="top">
+      <!-- ===== HERO ===== -->
+      <section class="hero" id="hero">
+        <video class="hero__video" autoplay muted loop playsinline poster="/img/thunderstix-packs.png">
+          <source src="/video/thunderstix.mp4" type="video/mp4" />
+        </video>
+        <div class="hero__video-tint"></div>
+        <canvas class="bolts" id="bolts" aria-hidden="true"></canvas>
+
+        <div class="hero__inner">
+          <p class="hero__eyebrow reveal-up">
+            <span class="pulse-dot"></span> High-Voltage Caffeinated Power Powder
+          </p>
+
+          <h1 class="hero__title">
+            <span class="line line--logo reveal-up">
+              <img class="hero__logo" src="/img/thunderstix-logo.svg" width="936" height="490" alt="ThunderStix — high-voltage caffeinated power powder" />
+            </span>
+            <span class="line"><span class="word word--thunder" data-split>THE&nbsp;THUNDER</span></span>
+          </h1>
+
+          <p class="hero__lead reveal-up">
+            ThunderStix is a <strong>direct-to-mouth</strong> caffeine hit. No can. No water.
+            No mercy. Tear it, tip it back, and ignite your next session.
+          </p>
+
+          <div class="hero__cta reveal-up">
+            <a href="#shop" class="btn btn--primary" data-magnetic>
+              <span>Summon a Box</span>
+              <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </a>
+            <button class="btn btn--ghost" id="playRitual" data-magnetic>
+              <span class="btn__play"><svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><path d="M6 4l14 8-14 8z" fill="currentColor"/></svg></span>
+              <span>Watch the Ritual</span>
+            </button>
+          </div>
+
+          <ul class="hero__stats reveal-up">
+            <li><b data-count="200">0</b><span>mg caffeine</span></li>
+            <li><b>0<i>g</i></b><span>sugar</span></li>
+            <li><b>0<i>s</i></b><span>to ignite</span></li>
+          </ul>
+        </div>
+
+        <div class="hero__scroll">
+          <span>Scroll to charge</span>
+          <span class="hero__scroll-line"><i></i></span>
+        </div>
+      </section>
+
+      <!-- ===== MARQUEE ===== -->
+      <div class="marquee" aria-hidden="true">
+        <div class="marquee__track">
+          <span>Direct&nbsp;to&nbsp;Mouth <i>⚡</i> Fuel&nbsp;the&nbsp;Thunder <i>⚡</i> Zero&nbsp;Sugar <i>⚡</i> Zero&nbsp;Crash <i>⚡</i> No&nbsp;Water&nbsp;Required <i>⚡</i> High&nbsp;Voltage <i>⚡</i></span>
+          <span>Direct&nbsp;to&nbsp;Mouth <i>⚡</i> Fuel&nbsp;the&nbsp;Thunder <i>⚡</i> Zero&nbsp;Sugar <i>⚡</i> Zero&nbsp;Crash <i>⚡</i> No&nbsp;Water&nbsp;Required <i>⚡</i> High&nbsp;Voltage <i>⚡</i></span>
+        </div>
+      </div>
+
+      <!-- ===== MANIFESTO ===== -->
+      <section class="manifesto" id="manifesto">
+        <p class="manifesto__kicker reveal-up">// The Prescription</p>
+        <h2 class="manifesto__text">
+          <span data-reveal>Water&nbsp;is&nbsp;for</span>
+          <span data-reveal>the&nbsp;<em>weak.</em></span>
+          <span data-reveal>Pour&nbsp;the&nbsp;powder,</span>
+          <span data-reveal>skip&nbsp;the&nbsp;ritual&nbsp;of</span>
+          <span data-reveal>mixing,&nbsp;and&nbsp;<em>ignite.</em></span>
+        </h2>
+        <div class="manifesto__sign reveal-up">— Doctor's orders.</div>
+      </section>
+
+      <!-- ===== PRODUCT / ANATOMY ===== -->
+      <section class="product" id="product">
+        <div class="section-head">
+          <span class="tag reveal-up">// 01 — The Product</span>
+          <h2 class="section-title"><span data-reveal>Anatomy of a</span> <span data-reveal><em>Stix.</em></span></h2>
+        </div>
+
+        <div class="product__grid">
+          <div class="product__media" data-parallax-wrap>
+            <div class="product__glow"></div>
+            <img src="/img/thunderstix-packs.png" alt="ThunderStix display boxes in Grape, Lemon and Lime" data-parallax="40" />
+            <div class="product__badge product__badge--a">21 Sticks / Box</div>
+            <div class="product__badge product__badge--b">Tear &amp; Pour</div>
+          </div>
+
+          <div class="product__copy">
+            <p class="product__lead reveal-up">
+              One stick. A flick of the wrist. A jolt of <strong>high-voltage powder</strong> straight
+              to the source. ThunderStix skips the can, the water and the wait — engineered for the
+              moment you need to lock in.
+            </p>
+
+            <ul class="spec-list">
+              <li class="reveal-up"><span class="spec-list__n">01</span><div><h4>Direct-to-mouth</h4><p>Tear the top, tip it back. The powder dissolves on contact — no shaker, no bottle, no spill.</p></div></li>
+              <li class="reveal-up"><span class="spec-list__n">02</span><div><h4>High-voltage dose</h4><p>200mg of clean caffeine plus a B-vitamin stack tuned for focus, not jitters.</p></div></li>
+              <li class="reveal-up"><span class="spec-list__n">03</span><div><h4>Zero sugar, zero crash</h4><p>5 calories. Natural flavor. The thunder rolls in and never drops you.</p></div></li>
+              <li class="reveal-up"><span class="spec-list__n">04</span><div><h4>Pocket artillery</h4><p>Slim, sealed, TSA-friendly. Stash a week of sessions in a jacket pocket.</p></div></li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== STATS BAND ===== -->
+      <section class="stats" id="stats">
+        <div class="stats__grid">
+          <div class="stat reveal-up"><b><span data-count="200">0</span></b><span class="stat__u">mg</span><p>Caffeine per stick</p></div>
+          <div class="stat reveal-up"><b><span data-count="21">0</span></b><span class="stat__u">ct</span><p>Sticks in every box</p></div>
+          <div class="stat reveal-up"><b><span data-count="0">0</span></b><span class="stat__u">g</span><p>Sugar. Always.</p></div>
+          <div class="stat reveal-up"><b><span data-count="100">0</span></b><span class="stat__u">%</span><p>Sessions, fueled</p></div>
+        </div>
+      </section>
+
+      <!-- ===== THE RITUAL ===== -->
+      <section class="ritual" id="ritual">
+        <div class="section-head section-head--center">
+          <span class="tag reveal-up">// 02 — The Ritual</span>
+          <h2 class="section-title"><span data-reveal>Tear.</span> <span data-reveal>Tip.</span> <span data-reveal><em>Ignite.</em></span></h2>
+          <p class="section-sub reveal-up">Three seconds from pocket to power. This is the whole instruction manual.</p>
+        </div>
+
+        <div class="ritual__steps">
+          <article class="rstep reveal-up">
+            <div class="rstep__n">01</div>
+            <div class="rstep__icon">
+              <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M12 14h40l-4 12H16zM18 26l4 24h20l4-24" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><path d="M30 8l4 6-5 4 5 4-4 6" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <h3>Tear</h3>
+            <p>Snap the notch on a single Stix. The seal cracks; the powder's awake.</p>
+          </article>
+          <article class="rstep reveal-up">
+            <div class="rstep__n">02</div>
+            <div class="rstep__icon">
+              <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M24 10l16 6-10 30-12-4z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><circle cx="34" cy="48" r="6" fill="none" stroke="currentColor" stroke-width="3"/></svg>
+            </div>
+            <h3>Tip</h3>
+            <p>Head back, pour it straight to the source. It melts on contact — no water, no wait.</p>
+          </article>
+          <article class="rstep reveal-up">
+            <div class="rstep__n">03</div>
+            <div class="rstep__icon">
+              <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M34 6l-16 28h12l-4 24 22-32H34z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/></svg>
+            </div>
+            <h3>Ignite</h3>
+            <p>Voltage hits in seconds. Focus sharpens, the fog lifts, the session begins.</p>
+          </article>
+        </div>
+      </section>
+
+      <!-- ===== FLAVORS ===== -->
+      <section class="flavors" id="flavors" data-flavor="grape">
+        <div class="flavors__bg"></div>
+        <div class="section-head">
+          <span class="tag reveal-up">// 03 — The Flavors</span>
+          <h2 class="section-title"><span data-reveal>Pick your</span> <span data-reveal><em>poison.</em></span></h2>
+        </div>
+
+        <div class="flavors__stage">
+          <div class="flavors__display">
+            <div class="flavors__halo"></div>
+            <img src="/img/thunderstix-packs.png" alt="ThunderStix flavor lineup" class="flavors__img" id="flavorImg" />
+            <div class="flavors__voltage"><span>Voltage</span><b id="flavorVolt">High</b></div>
+          </div>
+
+          <div class="flavors__panel">
+            <div class="flavors__name">
+              <span class="flavors__idx" id="flavorIdx">01 / 03</span>
+              <h3 id="flavorTitle">Grape Gambit</h3>
+              <p id="flavorDesc">Dark, electric and a little bit cursed. A deep grape rush with a tart violet snap that hits like a power chord.</p>
+              <ul class="flavors__notes" id="flavorNotes">
+                <li>Black grape</li><li>Tart finish</li><li>Purple haze</li>
+              </ul>
+            </div>
+
+            <div class="flavors__switch" role="tablist" aria-label="Flavors">
+              <button class="fchip is-active" data-flavor-pick="grape" role="tab" aria-selected="true">
+                <span class="fchip__swatch"></span> Grape Gambit
+              </button>
+              <button class="fchip" data-flavor-pick="lemon" role="tab" aria-selected="false">
+                <span class="fchip__swatch"></span> Lemon Hex
+              </button>
+              <button class="fchip" data-flavor-pick="lime" role="tab" aria-selected="false">
+                <span class="fchip__swatch"></span> Lime Lizards
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== DOC HUDU ===== -->
+      <section class="hudu" id="hudu">
+        <div class="hudu__grid">
+          <div class="hudu__media">
+            <div class="hudu__altar"></div>
+            <div class="hudu__rings" aria-hidden="true"><i></i><i></i><i></i></div>
+            <img src="/img/doc-hudu.png" alt="Doc Hudu, the voodoo physician mascot of HuduRX" id="huduImg" data-parallax="60" />
+            <div class="hudu__sigils" aria-hidden="true">✦ ✕ ✦ ✕ ✦</div>
+          </div>
+
+          <div class="hudu__copy">
+            <span class="tag reveal-up">// 04 — The Prescriber</span>
+            <h2 class="section-title"><span data-reveal>Meet</span> <span data-reveal><em>Doc&nbsp;Hudu.</em></span></h2>
+            <p class="reveal-up">
+              Half physician, half streetcorner mystic, Doc Hudu doesn't do refills — he does
+              <strong>rituals</strong>. He stitched the recipe in the back room of a midnight pharmacy:
+              clean caffeine, a B-vitamin hex, and just enough mischief to keep you grinning at 3 a.m.
+            </p>
+            <p class="reveal-up">
+              His caduceus is your prescription. His diagnosis is always the same:
+              <span class="hl">you need more thunder.</span>
+            </p>
+            <div class="hudu__rx reveal-up">
+              <div class="hudu__rx-head">℞ — Standing Prescription</div>
+              <div class="hudu__rx-line"><span>Patient</span><b>You</b></div>
+              <div class="hudu__rx-line"><span>Dosage</span><b>1 Stix, as the grind demands</b></div>
+              <div class="hudu__rx-line"><span>Refills</span><b>∞</b></div>
+              <div class="hudu__rx-sig">— Doc&nbsp;Hudu, ℞</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== BUILT FOR THE GRIND ===== -->
+      <section class="grind" id="grind">
+        <div class="section-head section-head--center">
+          <span class="tag reveal-up">// 05 — Built For The Grind</span>
+          <h2 class="section-title"><span data-reveal>Engineered for</span> <span data-reveal><em>overtime.</em></span></h2>
+          <p class="section-sub reveal-up">Ranked ladders. All-nighters. Double sessions at the rack. ThunderStix was tuned for the people who don't clock out.</p>
+        </div>
+
+        <div class="grind__grid">
+          <article class="gcard reveal-up" data-tilt>
+            <div class="gcard__ic">⚡</div>
+            <h3>Locked-in focus</h3>
+            <p>A clean 200mg paired with B6 + B12 for sharp, jitter-free attention when the round is on the line.</p>
+          </article>
+          <article class="gcard reveal-up" data-tilt>
+            <div class="gcard__ic">⏱</div>
+            <h3>Zero-second prep</h3>
+            <p>No shaker, no fridge, no kettle. Tear and tip mid-match without ever leaving your seat.</p>
+          </article>
+          <article class="gcard reveal-up" data-tilt>
+            <div class="gcard__ic">🜍</div>
+            <h3>No sugar crash</h3>
+            <p>Zero sugar and five calories means the thunder holds its charge — no 4 p.m. faceplant.</p>
+          </article>
+          <article class="gcard reveal-up" data-tilt>
+            <div class="gcard__ic">🎒</div>
+            <h3>Pocket-portable</h3>
+            <p>Slim sealed sticks survive backpacks, gym bags and tournament floors. Bring the whole week.</p>
+          </article>
+        </div>
+
+        <div class="versus reveal-up">
+          <div class="versus__col">
+            <h4>A ThunderStix</h4>
+            <ul>
+              <li><span>+</span> Fits in a pocket</li>
+              <li><span>+</span> Zero sugar, zero crash</li>
+              <li><span>+</span> Ignites in seconds</li>
+              <li><span>+</span> 200mg, dialed</li>
+            </ul>
+          </div>
+          <div class="versus__vs">VS</div>
+          <div class="versus__col versus__col--bad">
+            <h4>That energy can</h4>
+            <ul>
+              <li><span>—</span> Heavy, leaks, warm</li>
+              <li><span>—</span> 39g of sugar</li>
+              <li><span>—</span> Crash by halftime</li>
+              <li><span>—</span> Mystery dosing</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== COMMUNITY ===== -->
+      <section class="army" id="army">
+        <div class="army__inner">
+          <span class="tag reveal-up">// 06 — The Hudu Army</span>
+          <h2 class="army__title"><span data-reveal>Join&nbsp;the</span> <span data-reveal><em>cult&nbsp;of&nbsp;thunder.</em></span></h2>
+          <div class="army__stats">
+            <div class="reveal-up"><b><span data-count="148">0</span>k</b><span>in the ranks</span></div>
+            <div class="reveal-up"><b><span data-count="12">0</span>M</b><span>Stix ignited</span></div>
+            <div class="reveal-up"><b><span data-count="4">0</span>.9</b><span>avg ★ rating</span></div>
+          </div>
+
+          <div class="army__quotes">
+            <blockquote class="reveal-up">"Replaced four energy drinks a day with these. My desk doesn't smell like a recycling bin anymore." <cite>— Vex, Top-500 ranked</cite></blockquote>
+            <blockquote class="reveal-up">"Tear, tip, clutch. The Lime Lizards flavor is unfairly good." <cite>— mariko_fps</cite></blockquote>
+            <blockquote class="reveal-up">"Doc Hudu lives in my gym bag now. No notes." <cite>— D. Cole, powerlifter</cite></blockquote>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== SHOP ===== -->
+      <section class="shop" id="shop">
+        <div class="section-head section-head--center">
+          <span class="tag reveal-up">// 07 — Summon Your Supply</span>
+          <h2 class="section-title"><span data-reveal>Get</span> <span data-reveal><em>prescribed.</em></span></h2>
+          <p class="section-sub reveal-up">Free shipping over $40. Cancel a subscription anytime — the Doc won't take it personally.</p>
+        </div>
+
+        <div class="shop__grid">
+          <article class="pcard reveal-up" data-tilt>
+            <div class="pcard__tag">Starter</div>
+            <h3>The Hex</h3>
+            <p class="pcard__desc">One box. One flavor. 21 sticks to find your charge.</p>
+            <div class="pcard__price"><b>$24</b><span>/ box</span></div>
+            <button class="btn btn--card" data-magnetic data-add>Add to Cart</button>
+          </article>
+
+          <article class="pcard pcard--feature reveal-up" data-tilt>
+            <div class="pcard__flag">Most Summoned</div>
+            <div class="pcard__tag">Bundle</div>
+            <h3>The Coven</h3>
+            <p class="pcard__desc">All three flavors. 63 sticks of high-voltage variety.</p>
+            <div class="pcard__price"><b>$59</b><span>/ 3 boxes</span></div>
+            <div class="pcard__save">Save $13</div>
+            <button class="btn btn--primary btn--card" data-magnetic data-add>Add to Cart</button>
+          </article>
+
+          <article class="pcard reveal-up" data-tilt>
+            <div class="pcard__tag">Subscribe</div>
+            <h3>Ritual Supply</h3>
+            <p class="pcard__desc">Monthly drop to your door. 20% off, every cycle.</p>
+            <div class="pcard__price"><b>$19</b><span>/ mo</span></div>
+            <button class="btn btn--card" data-magnetic data-add>Start Ritual</button>
+          </article>
+        </div>
+      </section>
+
+      <!-- ===== ENLIST / NEWSLETTER ===== -->
+      <section class="enlist" id="enlist">
+        <div class="enlist__inner">
+          <h2 class="enlist__title"><span data-reveal>Enlist&nbsp;in&nbsp;the</span> <span data-reveal><em>thunder.</em></span></h2>
+          <p class="reveal-up">Drops, flavor tests and ritual codes. No spam — Doc Hudu hexes spammers.</p>
+          <form class="enlist__form reveal-up" id="enlistForm">
+            <input type="email" required placeholder="you@summon.me" aria-label="Email" />
+            <button class="btn btn--primary" type="submit" data-magnetic><span>Enlist</span></button>
+          </form>
+          <p class="enlist__done" id="enlistDone" hidden>⚡ You're in the ranks. Check your inbox for the ritual.</p>
+        </div>
+      </section>
+    </main>
+
+    <!-- ===== FOOTER ===== -->
+    <footer class="footer" id="footer">
+      <div class="footer__big" aria-hidden="true">FUEL&nbsp;THE&nbsp;THUNDER</div>
+      <div class="footer__cols">
+        <div class="footer__brand">
+          <img class="brand-logo" src="/img/hudurx-logo.svg" width="190" height="112" alt="HuduRX" />
+          <p>High-voltage caffeinated power powder. Prescribed by Doc Hudu. Made with natural ingredients.</p>
+        </div>
+        <nav class="footer__nav" aria-label="Footer">
+          <h5>Product</h5>
+          <a href="#product" data-link>ThunderStix</a>
+          <a href="#flavors" data-link>Flavors</a>
+          <a href="#ritual" data-link>The Ritual</a>
+          <a href="#shop" data-link>Shop</a>
+        </nav>
+        <nav class="footer__nav" aria-label="Company">
+          <h5>The Cult</h5>
+          <a href="#hudu" data-link>Doc Hudu</a>
+          <a href="#army" data-link>The Hudu Army</a>
+          <a href="#enlist" data-link>Enlist</a>
+        </nav>
+        <nav class="footer__nav" aria-label="Social">
+          <h5>Follow</h5>
+          <a href="#" data-magnetic>Instagram</a>
+          <a href="#" data-magnetic>TikTok</a>
+          <a href="#" data-magnetic>Discord</a>
+          <a href="#" data-magnetic>Twitch</a>
+        </nav>
+      </div>
+      <div class="footer__legal">
+        <p>© 2026 HuduRX. Fuel responsibly.</p>
+        <p class="footer__disc">These statements have not been evaluated by the FDA. ThunderStix is a dietary supplement and is not intended to diagnose, treat, cure or prevent any disease. Contains caffeine — not for children, those pregnant, or anyone sensitive to caffeine.</p>
+      </div>
+    </footer>
+
+    <!-- ===== RITUAL VIDEO MODAL ===== -->
+    <div class="modal" id="modal" aria-hidden="true">
+      <button class="modal__close" id="modalClose" aria-label="Close">✕</button>
+      <div class="modal__frame">
+        <video id="modalVideo" controls playsinline>
+          <source src="/video/thunderstix.mp4" type="video/mp4" />
+        </video>
+      </div>
+    </div>
+
+    <!-- ===== CART TOAST ===== -->
+    <div class="toast" id="toast" aria-live="polite"></div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
