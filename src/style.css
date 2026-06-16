@@ -262,9 +262,9 @@ section { position: relative; padding-block: clamp(80px, 12vw, 160px); }
   font-size: clamp(40px, 7vw, 104px); line-height: 0.86; letter-spacing: 0.02em; margin: 0 0 8px;
 }
 .hero__title .line { display: block; overflow: hidden; }
-.hero__title .line--logo { overflow: visible; margin-bottom: clamp(8px, 1.4vw, 22px); }
+.hero__title .line--logo { overflow: visible; text-align: center; margin-bottom: clamp(8px, 1.4vw, 22px); }
 .hero__logo {
-  width: clamp(300px, 66vw, 990px); height: auto;
+  width: clamp(320px, 68vw, 1040px); height: auto; margin-inline: auto;
   filter: drop-shadow(0 12px 38px rgba(176, 38, 255, 0.5)) drop-shadow(0 0 60px rgba(110, 255, 61, 0.12));
 }
 .hero__title .word { display: inline-block; }
