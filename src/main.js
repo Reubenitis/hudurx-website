@@ -359,19 +359,19 @@ const FLAVORS = {
     idx: '01 / 03', title: 'Grape Gambit', volt: 'High',
     desc: 'Dark, electric and a little bit cursed. A deep grape rush with a tart violet snap that hits like a power chord.',
     notes: ['Black grape', 'Tart finish', 'Purple haze'],
-    acc: '#b026ff', acc2: '#ff2d9b', glow: 'rgba(176,38,255,0.55)',
+    acc: '#b026ff', glow: 'rgba(176,38,255,0.55)',
   },
   lemon: {
     idx: '02 / 03', title: 'Lemon Hex', volt: 'Max',
     desc: 'A blinding citrus jolt charged with sour lightning. Bright, brash and impossible to ignore — the wake-up curse.',
     notes: ['Sour lemon', 'Electric zest', 'Golden sting'],
-    acc: '#ffc83d', acc2: '#ff8a3d', glow: 'rgba(255,200,61,0.5)',
+    acc: '#ffc83d', glow: 'rgba(255,200,61,0.5)',
   },
   lime: {
     idx: '03 / 03', title: 'Lime Lizards', volt: 'Toxic',
     desc: 'Reptile-green and ruthlessly crisp. A toxic-lime snap with a cold, clean finish that slithers straight to focus.',
     notes: ['Crisp lime', 'Cold finish', 'Toxic green'],
-    acc: '#6eff3d', acc2: '#1dd1a1', glow: 'rgba(110,255,61,0.45)',
+    acc: '#6eff3d', glow: 'rgba(110,255,61,0.45)',
   },
 };
 const flavorSection = $('#flavors');
@@ -380,7 +380,6 @@ function setFlavor(key) {
   const f = FLAVORS[key];
   if (!f || !flavorSection) return;
   flavorSection.style.setProperty('--acc', f.acc);
-  flavorSection.style.setProperty('--acc-2', f.acc2);
   flavorSection.style.setProperty('--acc-glow', f.glow);
   $('#flavorIdx').textContent = f.idx;
   $('#flavorTitle').textContent = f.title;

@@ -23,7 +23,6 @@
 
   /* accent (flavor-driven, defaults to grape/brand purple) */
   --acc: #b026ff;
-  --acc-2: #ff2d9b;
   --acc-glow: rgba(176, 38, 255, 0.55);
 
   --display: "Anton", "Arial Narrow", sans-serif;
@@ -170,7 +169,6 @@ body.loaded .loader { opacity: 0; visibility: hidden; transition: opacity 0.7s, 
 .btn--primary:hover::before { transform: translateY(0); }
 .btn--ghost { border: 1.5px solid var(--hair); color: var(--bone); background: rgba(255,255,255,0.02); backdrop-filter: blur(6px); }
 .btn--ghost:hover { border-color: var(--acc); color: var(--acc); }
-.btn__play { width: 26px; height: 26px; border-radius: 50%; background: var(--acc); color: #0a0610; display: grid; place-items: center; }
 .btn--nav { padding: 12px 18px; background: transparent; border: 1.5px solid var(--acc); color: var(--bone); }
 .btn--nav::before { content:""; position:absolute; inset:0; background: var(--acc); transform: translateY(101%); transition: transform .4s var(--ease); z-index:-1; }
 .btn--nav:hover { color: #0a0610; }
@@ -264,12 +262,12 @@ section { position: relative; padding-block: clamp(80px, 12vw, 160px); }
 .hero__title .line { display: block; overflow: hidden; }
 .hero__title .line--logo { overflow: visible; text-align: center; margin-bottom: clamp(8px, 1.4vw, 22px); }
 .hero__logo {
-  width: clamp(320px, 68vw, 1040px); height: auto; margin-inline: auto;
+  width: clamp(320px, 82vw, 1248px); height: auto; margin-inline: auto;
   filter: drop-shadow(0 12px 38px rgba(176, 38, 255, 0.5)) drop-shadow(0 0 60px rgba(110, 255, 61, 0.12));
 }
 .hero__title .word { display: inline-block; }
 .hero__title .word--thunder {
-  font-style: italic; color: transparent;
+  font-style: normal; color: transparent;
   background: linear-gradient(100deg, #c98bff 0%, #ff6cc4 46%, #9dff63 100%);
   -webkit-background-clip: text; background-clip: text;
   filter: drop-shadow(0 3px 12px rgba(0, 0, 0, 0.92)) drop-shadow(0 0 30px var(--acc-glow));
@@ -319,7 +317,7 @@ section { position: relative; padding-block: clamp(80px, 12vw, 160px); }
 .manifesto__kicker { font-family: var(--mono); font-size: 13px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--acc); margin-bottom: 28px; }
 .manifesto__text { font-family: var(--display); text-transform: uppercase; font-weight: 400; line-height: 0.98; font-size: clamp(40px, 7vw, 104px); }
 .manifesto__text span { display: block; }
-.manifesto__text em { font-style: italic; color: var(--acc); }
+.manifesto__text em { font-style: normal; color: var(--acc); }
 .manifesto__text [data-reveal] { display: block; }
 .manifesto__sign { font-family: var(--mono); color: var(--muted); margin-top: 32px; letter-spacing: 0.08em; }
 
@@ -566,7 +564,7 @@ section { position: relative; padding-block: clamp(80px, 12vw, 160px); }
 .army { background: var(--void-2); border-block: 1px solid var(--hair); overflow: hidden; }
 .army__inner { max-width: var(--maxw); margin: 0 auto; padding-inline: var(--gut); text-align: center; }
 .army__title { font-family: var(--display); text-transform: uppercase; font-size: clamp(44px, 8vw, 116px); line-height: 0.92; }
-.army__title em { font-style: italic; color: var(--acc); }
+.army__title em { font-style: normal; color: var(--acc); }
 .army__stats { display: flex; justify-content: center; gap: clamp(30px, 7vw, 90px); margin: 50px 0 60px; flex-wrap: wrap; }
 .army__stats b { font-family: var(--display); font-size: clamp(40px, 6vw, 72px); color: var(--green); display: block; line-height: 1; }
 .army__stats span { font-family: var(--mono); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
@@ -612,7 +610,7 @@ section { position: relative; padding-block: clamp(80px, 12vw, 160px); }
 .enlist { text-align: center; }
 .enlist__inner { max-width: 760px; margin: 0 auto; padding-inline: var(--gut); }
 .enlist__title { font-family: var(--display); text-transform: uppercase; font-size: clamp(46px, 9vw, 128px); line-height: 0.9; }
-.enlist__title em { font-style: italic; color: var(--acc); }
+.enlist__title em { font-style: normal; color: var(--acc); }
 .enlist p { color: var(--muted); margin-top: 22px; font-size: 17px; }
 .enlist__form { display: flex; gap: 12px; max-width: 520px; margin: 36px auto 0; flex-wrap: wrap; }
 .enlist__form input {
@@ -630,7 +628,7 @@ section { position: relative; padding-block: clamp(80px, 12vw, 160px); }
 .footer__big {
   font-family: var(--display); text-transform: uppercase; text-align: center; white-space: nowrap;
   font-size: clamp(54px, 16vw, 240px); line-height: 0.9; letter-spacing: 0.01em; padding: 40px 0 10px;
-  color: transparent; -webkit-text-stroke: 1.4px rgba(236,230,245,0.16); user-select: none;
+  color: transparent; -webkit-text-stroke: 2.5px rgba(255, 208, 2, 0.4); user-select: none;
 }
 .footer__cols {
   max-width: var(--maxw); margin: 0 auto; padding: 40px var(--gut) 50px;
@@ -646,17 +644,8 @@ section { position: relative; padding-block: clamp(80px, 12vw, 160px); }
 .footer__disc { max-width: 70ch; opacity: 0.7; line-height: 1.6; }
 
 /* =========================================================
-   MODAL + TOAST
+   TOAST
    ========================================================= */
-.modal { position: fixed; inset: 0; z-index: 9700; display: grid; place-items: center; padding: var(--gut);
-  background: rgba(4,2,8,0.9); backdrop-filter: blur(10px); opacity: 0; visibility: hidden; transition: opacity 0.4s, visibility 0.4s; }
-.modal.is-open { opacity: 1; visibility: visible; }
-.modal__frame { width: min(960px, 100%); aspect-ratio: 16/9; border: 1px solid var(--acc); border-radius: 10px; overflow: hidden; box-shadow: 0 0 80px var(--acc-glow); transform: scale(0.94); transition: transform 0.4s var(--ease); }
-.modal.is-open .modal__frame { transform: scale(1); }
-.modal__frame video { width: 100%; height: 100%; object-fit: cover; background: #000; }
-.modal__close { position: absolute; top: 24px; right: 28px; font-size: 24px; color: var(--bone); width: 48px; height: 48px; border: 1px solid var(--hair); border-radius: 50%; transition: border-color 0.3s, color 0.3s, transform 0.3s; }
-.modal__close:hover { border-color: var(--acc); color: var(--acc); transform: rotate(90deg); }
-
 .toast { position: fixed; bottom: 28px; left: 50%; transform: translate(-50%, 140%); z-index: 9600;
   background: var(--acc); color: #0a0610; font-family: var(--mono); font-weight: 700; font-size: 14px; letter-spacing: 0.04em;
   padding: 14px 22px; border-radius: 4px; box-shadow: 0 18px 50px var(--acc-glow); transition: transform 0.5s var(--ease); }
