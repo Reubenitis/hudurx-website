@@ -516,6 +516,7 @@ section { position: relative; padding-block: clamp(80px, 12vw, 160px); }
   color: var(--muted); display: flex; align-items: center; gap: 10px;
 }
 .gaming__fs { flex: none; }
+.gaming__actions { display: flex; gap: 10px; flex: none; }
 .gaming__hint-mobile { display: none; }
 /* Mobile: drop the cabinet frame so the game runs edge-to-edge, full width */
 @media (max-width: 760px) {

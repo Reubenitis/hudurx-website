@@ -485,9 +485,34 @@ if (gameFrame) {
     try { return !!(gameFrame.contentDocument && gameFrame.contentDocument.querySelector('#game')); }
     catch (e) { return false; }
   };
-  const onGameReady = () => { if (!gameDocReady()) return; injectFit(); preloadThenReveal(); };
+  let gameStarted = false, exited = false;
+  const onGameReady = () => { if (!gameDocReady()) return; gameStarted = true; injectFit(); preloadThenReveal(); };
   gameFrame.addEventListener('load', onGameReady);
   if (gameDocReady()) onGameReady();
+
+  // Clean-out: fully stop the game (audio + loop) when it scrolls out of view or
+  // on Exit — pointing the iframe at about:blank tears down its audio + RAF loop.
+  const GAME_SRC = gameFrame.getAttribute('src');
+  const stopGame = () => {
+    gameStarted = false;
+    revealed = false;
+    if (gameLoader) gameLoader.classList.remove('is-hidden');
+    gameFrame.src = 'about:blank';
+  };
+  const startGame = () => {
+    if (gameFrame.getAttribute('src') === 'about:blank') gameFrame.src = GAME_SRC;
+  };
+  new IntersectionObserver((entries) => {
+    if (entries[0].isIntersecting) { if (!exited) startGame(); }
+    else { exited = false; if (gameStarted) stopGame(); }
+  }, { threshold: 0 }).observe(gameFrame);
+
+  $('#gameExit')?.addEventListener('click', () => {
+    exited = true;
+    stopGame();
+    if (lenis) lenis.scrollTo('#hudu', { duration: 1 });
+    else document.querySelector('#hudu')?.scrollIntoView({ behavior: 'smooth' });
+  });
 }
 
 /* =========================================================

@@ -313,19 +313,56 @@ function canvasPos(e){
   const r = cv.getBoundingClientRect();
   return { x:(e.clientX-r.left)/r.width*W, y:(e.clientY-r.top)/r.height*H };
 }
+/* on-screen twin sticks for touch: LEFT half = move, RIGHT half = aim & hold-to-fire */
+const STICK_R = 64;
+const sticks = { L:null, R:null };           // active touch: { id, x, y }
+function stickBase(side){ return side==='L' ? { x:120, y:H-104 } : { x:W-120, y:H-104 }; }
+function stickDir(side){
+  const s = sticks[side]; if(!s) return { nx:0, ny:0, mag:0 };
+  const b = stickBase(side), dx = s.x-b.x, dy = s.y-b.y, m = Math.hypot(dx,dy);
+  if(m < 0.001) return { nx:0, ny:0, mag:0 };
+  return { nx:dx/m, ny:dy/m, mag: Math.min(m, STICK_R)/STICK_R };
+}
+function stickForId(id){ return (sticks.L && sticks.L.id===id) ? 'L' : (sticks.R && sticks.R.id===id) ? 'R' : null; }
+function drawSticks(){
+  for(const side of ['L','R']){
+    const b = stickBase(side), d = stickDir(side);
+    cx.save();
+    cx.lineWidth = 3; cx.strokeStyle = 'rgba(255,255,255,0.3)'; cx.fillStyle = 'rgba(255,255,255,0.1)';
+    cx.beginPath(); cx.arc(b.x, b.y, STICK_R, 0, 6.2832); cx.fill(); cx.stroke();
+    cx.fillStyle = 'rgba(255,255,255,0.3)';
+    cx.beginPath(); cx.arc(b.x + d.nx*d.mag*STICK_R, b.y + d.ny*d.mag*STICK_R, 27, 0, 6.2832); cx.fill();
+    cx.restore();
+  }
+}
 cv.addEventListener('pointerdown', e=>{
   const p = canvasPos(e);
-  player.aimX = p.x; player.aimY = p.y;
-  pointerDown = true;
   if(e.pointerType === 'touch') touchMode = true;
-  if(state!==ST.PLAY) startOrRestart();
+  if(state!==ST.PLAY){ player.aimX=p.x; player.aimY=p.y; pointerDown=true; startOrRestart(); return; }
+  if(touchMode){
+    const side = p.x < W/2 ? 'L' : 'R';
+    sticks[side] = { id:e.pointerId, x:p.x, y:p.y };
+    try { cv.setPointerCapture(e.pointerId); } catch(_){}
+  } else {
+    player.aimX=p.x; player.aimY=p.y; pointerDown=true;
+  }
 });
 cv.addEventListener('pointermove', e=>{
   const p = canvasPos(e);
-  player.aimX = p.x; player.aimY = p.y;
-  pointerOnCanvas = true;
+  if(touchMode){
+    const k = stickForId(e.pointerId);
+    if(k){ sticks[k].x = p.x; sticks[k].y = p.y; }
+    return;
+  }
+  player.aimX=p.x; player.aimY=p.y; pointerOnCanvas=true;
 });
-addEventListener('pointerup', ()=> pointerDown = false);
+function endPointer(e){
+  pointerDown = false;
+  const k = stickForId(e.pointerId);
+  if(k) sticks[k] = null;
+}
+addEventListener('pointerup', endPointer);
+addEventListener('pointercancel', endPointer);
 
 function startOrRestart(){
   audio(); // unlock audio on gesture
@@ -677,11 +714,10 @@ function update(dt){
   /* --- player movement --- */
   let mx = (keys.KeyD||keys.ArrowRight?1:0) - (keys.KeyA||keys.ArrowLeft?1:0);
   let my = (keys.KeyS||keys.ArrowDown?1:0) - (keys.KeyW||keys.ArrowUp?1:0);
-  // touch: walk toward held pointer if far away
-  if(pointerDown && !mx && !my){
-    const dx = player.aimX-player.x, dy = player.aimY-player.y;
-    const d = Math.hypot(dx,dy);
-    if(d > 90){ mx = dx/d; my = dy/d; }
+  // touch: LEFT stick drives movement
+  if(touchMode){
+    const L = stickDir('L');
+    if(L.mag > 0.2){ mx = L.nx; my = L.ny; } else { mx = 0; my = 0; }
   }
   const ml = Math.hypot(mx,my)||1;
   // sleepiness slows you down — energy IS speed
@@ -704,13 +740,17 @@ function update(dt){
 
   /* --- firing --- */
   player.fireCd -= dt;
-  const wantFire = pointerDown || keys.Space || touchMode;
+  const rDir = touchMode ? stickDir('R') : null;
+  const wantFire = touchMode ? (rDir.mag > 0.25) : (pointerDown || keys.Space);
   if(wantFire && player.fireCd<=0){
     const rate = player.thunder>0 ? 0.085 : 0.21;
     player.fireCd = rate;
     let tx = player.aimX, ty = player.aimY;
-    if(touchMode || (keys.Space && !pointerDown)){
-      // touch / space = auto-aim nearest Z
+    if(touchMode){
+      // RIGHT stick aims; hold it to keep firing
+      tx = player.x + rDir.nx*140; ty = player.y + rDir.ny*140;
+    } else if(keys.Space && !pointerDown){
+      // space = auto-aim nearest Z
       let bd = 1e12, tgt = null;
       for(const z of zs){ const d = dist2(player.x,player.y,z.x,z.y); if(d<bd){bd=d;tgt=z;} }
       if(tgt){ tx = tgt.x; ty = tgt.y; } else { tx = player.x + player.face*100; ty = player.y; }
@@ -994,6 +1034,7 @@ function draw(){
     drawHUD();
     drawDrowsiness();
     drawCurse();
+    if(touchMode) drawSticks();
   } else if(state===ST.INTRO){
     /* the gif + prompts are HTML overlays; the sigil background shows in the letterbox */
   } else {
