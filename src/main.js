@@ -432,29 +432,62 @@ $('#gameFullscreen')?.addEventListener('click', () => {
   const req = gameFrame.requestFullscreen || gameFrame.webkitRequestFullscreen || gameFrame.msRequestFullscreen;
   if (req) req.call(gameFrame);
 });
-// The game sizes its canvas from its OWN iframe viewport, which is unreliable
-// while it lazy-loads during a smooth-scroll (it can latch onto a wrong size
-// and render zoomed/clipped until reload). Instead, measure the frame from the
-// parent (always correct) and set the canvas size directly. Re-apply on load,
-// when it scrolls into view, on resize, and with a few staggered retries to
-// override any late self-fit from the game.
+// The game sizes its canvas in JS from its own iframe viewport, which races on
+// lazy-load (desktop) and can render zoomed/clipped until a reload. The frame
+// is always 16:9 and the canvas content is 16:9, so instead of fighting that
+// timing we inject a stylesheet into the iframe that forces the canvas to fill
+// the frame. A stylesheet !important rule beats the game's inline px sizing, so
+// it's immune to the race entirely (overlays are positioned relative to #stage,
+// so they follow). Injected from the parent only, so the standalone game is
+// untouched.
 if (gameFrame) {
-  const refit = () => {
+  const injectFit = () => {
     try {
-      const cv = gameFrame.contentDocument && gameFrame.contentDocument.querySelector('#game');
-      if (!cv) return;
-      const r = gameFrame.getBoundingClientRect();
-      if (!r.width || !r.height) return;
-      const s = Math.min(r.width / 960, r.height / 540) * 0.97;
-      cv.style.width = 960 * s + 'px';
-      cv.style.height = 540 * s + 'px';
+      const doc = gameFrame.contentDocument;
+      if (!doc || doc.getElementById('__embed-fit')) return;
+      const st = doc.createElement('style');
+      st.id = '__embed-fit';
+      st.textContent =
+        'html,body{width:100%!important;height:100%!important}' +
+        '#stage{position:absolute!important;inset:0!important;width:100%!important;height:100%!important}' +
+        '#game{width:100%!important;height:100%!important;border-radius:0!important}';
+      doc.head.appendChild(st);
     } catch (e) { /* ignore */ }
   };
-  const refitSoon = () => { refit(); [120, 400, 900, 1500].forEach((d) => setTimeout(refit, d)); };
-  gameFrame.addEventListener('load', refitSoon);
-  window.addEventListener('resize', refit);
-  if (window.ResizeObserver) new ResizeObserver(refit).observe(gameFrame);
-  new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) refitSoon(); }, { threshold: 0.25 }).observe(gameFrame);
+  // Branded loader stays over the game until its title art is actually loaded.
+  // The game starts drawing its menu before assets arrive (the cream flash), so
+  // we preload the same title assets it uses (shared cache) and reveal once in.
+  const gameLoader = $('#gameLoader');
+  let revealed = false;
+  const reveal = () => {
+    if (revealed) return;
+    revealed = true;
+    setTimeout(() => gameLoader && gameLoader.classList.add('is-hidden'), 300);
+  };
+  const preloadThenReveal = () => {
+    const assets = [
+      './game/assets/HuduRX_Thunderstix_Landing_Page_BKGD.png',
+      './game/assets/Hudu_Pattern.svg',
+      './game/assets/ThunderStix_Game_Logo.svg',
+      './game/assets/Doc_Hudu.svg',
+    ];
+    Promise.allSettled(assets.map((src) => new Promise((res) => {
+      const im = new Image();
+      im.onload = im.onerror = res;
+      im.src = src;
+    }))).then(reveal);
+    setTimeout(reveal, 6000); // safety net so the loader can never get stuck
+  };
+
+  // Only act once the REAL game is in the iframe — a lazy iframe's initial
+  // about:blank reports readyState 'complete', which would hide the loader early.
+  const gameDocReady = () => {
+    try { return !!(gameFrame.contentDocument && gameFrame.contentDocument.querySelector('#game')); }
+    catch (e) { return false; }
+  };
+  const onGameReady = () => { if (!gameDocReady()) return; injectFit(); preloadThenReveal(); };
+  gameFrame.addEventListener('load', onGameReady);
+  if (gameDocReady()) onGameReady();
 }
 
 /* =========================================================
