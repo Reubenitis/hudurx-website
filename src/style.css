@@ -516,9 +516,17 @@ section { position: relative; padding-block: clamp(80px, 12vw, 160px); }
   color: var(--muted); display: flex; align-items: center; gap: 10px;
 }
 .gaming__fs { flex: none; }
-@media (max-width: 640px) {
+.gaming__hint-mobile { display: none; }
+/* Mobile: drop the cabinet frame so the game runs edge-to-edge, full width */
+@media (max-width: 760px) {
+  .gaming__stage { max-width: none; padding-inline: 0; }
+  .gaming__cabinet { padding: 0; border-radius: 0; box-shadow: none; background: none; }
+  .gaming__cabinet::before { display: none; }
+  .gaming__screen { border-radius: 0; }
+  .gaming__bar { padding-inline: var(--gut); justify-content: center; text-align: center; }
   .gaming__hint { font-size: 10.5px; }
-  .gaming__bar { justify-content: center; text-align: center; }
+  .gaming__hint-desktop { display: none; }
+  .gaming__hint-mobile { display: inline; }
 }
 
 /* =========================================================

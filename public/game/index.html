@@ -308,7 +308,7 @@ addEventListener('keydown', e=>{
 });
 addEventListener('keyup', e=> keys[e.code] = false);
 
-let pointerDown = false, pointerOnCanvas = false;
+let pointerDown = false, pointerOnCanvas = false, touchMode = matchMedia('(hover: none) and (pointer: coarse)').matches;
 function canvasPos(e){
   const r = cv.getBoundingClientRect();
   return { x:(e.clientX-r.left)/r.width*W, y:(e.clientY-r.top)/r.height*H };
@@ -317,6 +317,7 @@ cv.addEventListener('pointerdown', e=>{
   const p = canvasPos(e);
   player.aimX = p.x; player.aimY = p.y;
   pointerDown = true;
+  if(e.pointerType === 'touch') touchMode = true;
   if(state!==ST.PLAY) startOrRestart();
 });
 cv.addEventListener('pointermove', e=>{
@@ -703,13 +704,13 @@ function update(dt){
 
   /* --- firing --- */
   player.fireCd -= dt;
-  const wantFire = pointerDown || keys.Space;
+  const wantFire = pointerDown || keys.Space || touchMode;
   if(wantFire && player.fireCd<=0){
     const rate = player.thunder>0 ? 0.085 : 0.21;
     player.fireCd = rate;
     let tx = player.aimX, ty = player.aimY;
-    if(keys.Space && !pointerDown){
-      // space = auto-aim nearest Z
+    if(touchMode || (keys.Space && !pointerDown)){
+      // touch / space = auto-aim nearest Z
       let bd = 1e12, tgt = null;
       for(const z of zs){ const d = dist2(player.x,player.y,z.x,z.y); if(d<bd){bd=d;tgt=z;} }
       if(tgt){ tx = tgt.x; ty = tgt.y; } else { tx = player.x + player.face*100; ty = player.y; }
