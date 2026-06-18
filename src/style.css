@@ -670,6 +670,11 @@ section { position: relative; padding-block: clamp(80px, 12vw, 160px); }
     display: flex; flex-direction: column; position: fixed; inset: 0; background: var(--void);
     align-items: center; justify-content: center; gap: 26px; z-index: 999;
   }
+  /* the stuck nav's backdrop-filter would trap the fixed menu inside the bar —
+     drop it while open so the overlay fills the whole viewport */
+  .nav.is-open { backdrop-filter: none; -webkit-backdrop-filter: none; }
+  /* lift the burger (now an X) above the overlay so it can close the menu */
+  .nav.is-open .nav__burger { position: relative; z-index: 1001; }
   .nav.is-open .nav__links a { font-family: var(--display); font-size: 32px; color: var(--bone); }
   .nav.is-open .nav__burger i:first-child { transform: translateY(3.5px) rotate(45deg); }
   .nav.is-open .nav__burger i:last-child { transform: translateY(-3.5px) rotate(-45deg); }
