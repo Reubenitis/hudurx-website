@@ -2088,14 +2088,17 @@ window.__vudu = {
 /* When embedded, tell the parent once a REAL title frame has been painted —
    fonts loaded and the key title art (backdrop, logo, mascot) decoded — so the
    parent can lift its branded loader with no cream/half-drawn flash. */
-let __fontsReady = false, __readySent = false;
+let __fontsReady = false, __readySent = false, __readyAt = 0;
+const __SETTLE_MS = 350;   // hold the parent's LOADING cover this long after everything's ready
 if(document.fonts && document.fonts.ready) document.fonts.ready.then(()=>{ __fontsReady = true; });
 else __fontsReady = true;
-function __signalReadyIfPainted(){
+function __signalReadyIfPainted(now){
   if(__readySent) return;
-  if(!__fontsReady) return;
-  if(!(bgReady && logoReady && docReady)) return;
-  __readySent = true;                       // draw() for this frame already ran, so a full title is on screen
+  // reset the settle clock until fonts + all key title art are decoded
+  if(!__fontsReady || !(bgReady && logoReady && docReady)){ __readyAt = 0; return; }
+  if(!__readyAt){ __readyAt = now; return; }
+  if(now - __readyAt < __SETTLE_MS) return;  // let the title render stably for a beat first
+  __readySent = true;
   if(window.parent !== window){ try { window.parent.postMessage('hudu:ready', '*'); } catch(e){} }
 }
 
@@ -2107,7 +2110,7 @@ function frame(now){
   if(hitstop>0){ hitstop -= rawDt; dt *= 0.12; }  // freeze-frame impact
   update(dt);
   draw();
-  __signalReadyIfPainted();
+  __signalReadyIfPainted(now);
   cv.style.cursor = state===ST.PLAY ? 'crosshair'
                   : (state===ST.TITLE && hoverPlay) ? 'pointer' : 'default';
   requestAnimationFrame(frame);
