@@ -453,35 +453,30 @@ if (gameFrame) {
       doc.head.appendChild(st);
     } catch (e) { /* ignore */ }
   };
-  // Branded loader stays over the game until its title art is actually loaded.
-  // The game starts drawing its menu before assets arrive (the cream flash), so
-  // we preload the same title assets it uses (shared cache) and reveal once in.
+  // The branded loader must stay over the game until the game has actually
+  // PAINTED a real title frame — not merely until its assets are cached. The
+  // only signal that means "the game drew something good" is the 'hudu:ready'
+  // message the game posts after its fonts + art are in and a frame rendered.
   const gameLoader = $('#gameLoader');
-  let revealed = false;
+  let revealed = false, safetyTimer = 0;
   const reveal = () => {
     if (revealed) return;
     revealed = true;
-    setTimeout(() => gameLoader && gameLoader.classList.add('is-hidden'), 300);
+    clearTimeout(safetyTimer);
+    setTimeout(() => gameLoader && gameLoader.classList.add('is-hidden'), 250);
   };
-  // Primary trigger: the game posts 'hudu:ready' once it has painted a real
-  // title frame (fonts + art loaded) — this is what kills the cream flash.
-  // preloadThenReveal below stays as a fallback if the message never arrives.
+  // Primary (and effectively only) trigger — the game itself says it painted.
   window.addEventListener('message', (e) => {
     if (e.source === gameFrame.contentWindow && e.data === 'hudu:ready') reveal();
   });
-  const preloadThenReveal = () => {
-    const assets = [
-      './game/assets/HuduRX_Thunderstix_Landing_Page_BKGD.png',
-      './game/assets/Hudu_Pattern.svg',
-      './game/assets/ThunderStix_Game_Logo.svg',
-      './game/assets/Doc_Hudu.svg',
-    ];
-    Promise.allSettled(assets.map((src) => new Promise((res) => {
-      const im = new Image();
-      im.onload = im.onerror = res;
-      im.src = src;
-    }))).then(reveal);
-    setTimeout(reveal, 6000); // safety net so the loader can never get stuck
+  // Warm the browser cache with the game's title art so the game boots faster.
+  // This deliberately does NOT hide the loader: cache-warmed != painted, and
+  // hiding on this (as it used to) is exactly what lifted the loader mid-boot.
+  const preloadAssets = () => {
+    ['./game/assets/HuduRX_Thunderstix_Landing_Page_BKGD.png',
+     './game/assets/Hudu_Pattern.svg',
+     './game/assets/ThunderStix_Game_Logo.svg',
+     './game/assets/Doc_Hudu.svg'].forEach((src) => { const im = new Image(); im.src = src; });
   };
 
   // Only act once the REAL game is in the iframe — a lazy iframe's initial
@@ -491,7 +486,14 @@ if (gameFrame) {
     catch (e) { return false; }
   };
   let gameStarted = false, exited = false;
-  const onGameReady = () => { if (!gameDocReady()) return; gameStarted = true; injectFit(); preloadThenReveal(); };
+  const onGameReady = () => {
+    if (!gameDocReady()) return;
+    gameStarted = true;
+    injectFit();
+    preloadAssets();
+    clearTimeout(safetyTimer);
+    safetyTimer = setTimeout(reveal, 8000); // last-resort unstick if 'hudu:ready' never arrives
+  };
   gameFrame.addEventListener('load', onGameReady);
   if (gameDocReady()) onGameReady();
 
@@ -501,6 +503,7 @@ if (gameFrame) {
   const stopGame = () => {
     gameStarted = false;
     revealed = false;
+    clearTimeout(safetyTimer);
     if (gameLoader) gameLoader.classList.remove('is-hidden');
     gameFrame.src = 'about:blank';
   };
