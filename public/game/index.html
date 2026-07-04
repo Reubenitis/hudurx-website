@@ -2085,6 +2085,20 @@ window.__vudu = {
   slowClap(){ thunderClap(); hitstop = 2.5; },   // long freeze-frame, for eyeballing the effect
 };
 
+/* When embedded, tell the parent once a REAL title frame has been painted —
+   fonts loaded and the key title art (backdrop, logo, mascot) decoded — so the
+   parent can lift its branded loader with no cream/half-drawn flash. */
+let __fontsReady = false, __readySent = false;
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(()=>{ __fontsReady = true; });
+else __fontsReady = true;
+function __signalReadyIfPainted(){
+  if(__readySent) return;
+  if(!__fontsReady) return;
+  if(!(bgReady && logoReady && docReady)) return;
+  __readySent = true;                       // draw() for this frame already ran, so a full title is on screen
+  if(window.parent !== window){ try { window.parent.postMessage('hudu:ready', '*'); } catch(e){} }
+}
+
 let last = performance.now();
 function frame(now){
   const rawDt = Math.min(0.033, (now-last)/1000);
@@ -2093,6 +2107,7 @@ function frame(now){
   if(hitstop>0){ hitstop -= rawDt; dt *= 0.12; }  // freeze-frame impact
   update(dt);
   draw();
+  __signalReadyIfPainted();
   cv.style.cursor = state===ST.PLAY ? 'crosshair'
                   : (state===ST.TITLE && hoverPlay) ? 'pointer' : 'default';
   requestAnimationFrame(frame);

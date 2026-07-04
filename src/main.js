@@ -356,21 +356,21 @@ function bolts() {
    ========================================================= */
 const FLAVORS = {
   grape: {
-    idx: '01 / 03', title: 'Grape Gambit', volt: 'High',
-    desc: 'Dark, electric and a little bit cursed. A deep grape rush with a tart violet snap that hits like a power chord.',
-    notes: ['Black grape', 'Tart finish', 'Purple haze'],
+    idx: '01 / 03', title: 'Grape Gambit', volt: '200mg',
+    desc: 'Dark, electric and a little bit cursed. Deep grape with a tart violet snap that hits like a power chord.',
+    notes: ['Black grape', 'Tart snap', 'Purple haze'],
     acc: '#b026ff', glow: 'rgba(176,38,255,0.55)',
   },
-  lemon: {
-    idx: '02 / 03', title: 'Lemon Hex', volt: 'Max',
-    desc: 'A blinding citrus jolt charged with sour lightning. Bright, brash and impossible to ignore — the wake-up curse.',
-    notes: ['Sour lemon', 'Electric zest', 'Golden sting'],
-    acc: '#ffc83d', glow: 'rgba(255,200,61,0.5)',
+  coco: {
+    idx: '02 / 03', title: 'Pineapple Coco-Loco', volt: '200mg',
+    desc: 'Tropical and unhinged. Sweet pineapple crashes into creamy coconut — then the thunder rolls in.',
+    notes: ['Sweet pineapple', 'Creamy coconut', 'Tropic thunder'],
+    acc: '#ffd002', glow: 'rgba(255,208,2,0.5)',
   },
   lime: {
-    idx: '03 / 03', title: 'Lime Lizards', volt: 'Toxic',
-    desc: 'Reptile-green and ruthlessly crisp. A toxic-lime snap with a cold, clean finish that slithers straight to focus.',
-    notes: ['Crisp lime', 'Cold finish', 'Toxic green'],
+    idx: '03 / 03', title: 'Lime Lazarus', volt: '200mg',
+    desc: 'Back-from-the-dead crisp. Cold, clean lime that resurrects you mid-slump — no water, no mercy.',
+    notes: ['Crisp lime', 'Ice-cold finish', 'Risen again'],
     acc: '#6eff3d', glow: 'rgba(110,255,61,0.45)',
   },
 };
@@ -463,6 +463,12 @@ if (gameFrame) {
     revealed = true;
     setTimeout(() => gameLoader && gameLoader.classList.add('is-hidden'), 300);
   };
+  // Primary trigger: the game posts 'hudu:ready' once it has painted a real
+  // title frame (fonts + art loaded) — this is what kills the cream flash.
+  // preloadThenReveal below stays as a fallback if the message never arrives.
+  window.addEventListener('message', (e) => {
+    if (e.source === gameFrame.contentWindow && e.data === 'hudu:ready') reveal();
+  });
   const preloadThenReveal = () => {
     const assets = [
       './game/assets/HuduRX_Thunderstix_Landing_Page_BKGD.png',
@@ -513,6 +519,105 @@ if (gameFrame) {
     else document.querySelector('#hudu')?.scrollIntoView({ behavior: 'smooth' });
   });
 }
+
+/* =========================================================
+   DOC HUDU — cursor reaction + magical particle emitter
+   Doc leans/drifts toward the pointer and trails green/purple/gold
+   sparkles. JS owns the img transform (float bob + tilt); a canvas
+   layer draws the particles. Idle unless the section is on-screen.
+   ========================================================= */
+(() => {
+  const media = $('.hudu__media');
+  const doc = $('#huduImg');
+  const fx = $('.hudu__fx');
+  if (!media || !doc || !fx || prefersReduced) return;
+
+  const ctx = fx.getContext('2d');
+  const COLORS = ['#6eff3d', '#b026ff', '#ffd002']; // green · purple · gold
+  let W = 0, H = 0, dpr = Math.min(2, window.devicePixelRatio || 1);
+  const resize = () => {
+    const r = media.getBoundingClientRect();
+    if (!r.width || !r.height) return; // layout not ready yet — retry on IO/resize
+    W = r.width; H = r.height;
+    fx.width = Math.round(W * dpr); fx.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  };
+  resize();
+  window.addEventListener('resize', resize);
+
+  let particles = [];
+  let hovering = false, visible = false, running = false;
+  let mx = W / 2, my = H / 2;      // pointer in media space
+  let tx = 0, ty = 0, cx = 0, cy = 0, hov = 0; // tilt targets/current + hover ease
+  let t = 0, lastSpawn = 0;
+
+  const setTargets = (e) => {
+    const r = media.getBoundingClientRect();
+    mx = e.clientX - r.left; my = e.clientY - r.top;
+    tx = ((mx / r.width) - 0.5) * 2;   // -1..1
+    ty = ((my / r.height) - 0.5) * 2;
+  };
+  media.addEventListener('pointerenter', () => { hovering = true; });
+  media.addEventListener('pointerleave', () => { hovering = false; tx = 0; ty = 0; });
+  media.addEventListener('pointermove', setTargets);
+
+  const spawn = (n) => {
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * Math.PI * 2, sp = 0.4 + Math.random() * 1.7;
+      particles.push({
+        x: mx, y: my,
+        vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 0.7,
+        life: 1, decay: 0.010 + Math.random() * 0.012,
+        size: 2.5 + Math.random() * 4.5, rot: Math.random() * 6.28, spin: (Math.random() - 0.5) * 0.2,
+        col: COLORS[(Math.random() * COLORS.length) | 0],
+      });
+    }
+  };
+
+  const spark = (s) => { // 4-point concave sparkle
+    ctx.beginPath();
+    ctx.moveTo(0, -s);
+    ctx.quadraticCurveTo(0, 0, s, 0);
+    ctx.quadraticCurveTo(0, 0, 0, s);
+    ctx.quadraticCurveTo(0, 0, -s, 0);
+    ctx.quadraticCurveTo(0, 0, 0, -s);
+    ctx.fill();
+  };
+
+  const loop = (now) => {
+    if (!visible) { running = false; return; } // stop RAF when off-screen
+    t += 0.016;
+    cx += (tx - cx) * 0.09; cy += (ty - cy) * 0.09;
+    hov += ((hovering ? 1 : 0) - hov) * 0.08;
+    const bob = Math.sin(t * 1.1) * 9;
+    doc.style.transform =
+      `translate3d(${(cx * 22).toFixed(2)}px, ${(bob + cy * 14).toFixed(2)}px, 0) rotate(${(cx * 6).toFixed(2)}deg) scale(${(1 + hov * 0.04).toFixed(3)})`;
+
+    if (hovering && now - lastSpawn > 26) { spawn(2); lastSpawn = now; }
+
+    ctx.clearRect(0, 0, W, H);
+    ctx.globalCompositeOperation = 'lighter';
+    particles = particles.filter((p) => p.life > 0);
+    for (const p of particles) {
+      p.x += p.vx; p.y += p.vy; p.vy += 0.02; p.vx *= 0.99;
+      p.life -= p.decay; p.rot += p.spin;
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, p.life);
+      ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+      ctx.fillStyle = p.col; ctx.shadowColor = p.col; ctx.shadowBlur = 12;
+      spark(p.size * (0.6 + p.life * 0.6));
+      ctx.restore();
+    }
+    ctx.globalCompositeOperation = 'source-over';
+    requestAnimationFrame(loop);
+  };
+  const kick = () => { if (!running && visible) { running = true; requestAnimationFrame(loop); } };
+
+  new IntersectionObserver((ents) => {
+    visible = ents[0].isIntersecting;
+    if (visible) { resize(); kick(); }
+  }, { threshold: 0.05 }).observe(media);
+})();
 
 /* =========================================================
    BOOT
