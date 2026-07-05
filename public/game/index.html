@@ -73,9 +73,17 @@ const W = 960, H = 540;
 const cv = document.getElementById('game');
 const cx = cv.getContext('2d');
 
-/* ---------- responsive scale ---------- */
+/* ---------- responsive scale ----------
+   Aspect-preserving contain-fit for ANY viewport (inline 16:9 embed,
+   phone-portrait immersive mode, native fullscreen) — the canvas is never
+   stretched, so aim/touch coordinates always map 1:1 to what's drawn.
+   When embedded we drop the standalone page's chrome (radius/glow/margin). */
+const EMBED = (()=>{ try { return window.parent !== window; } catch(e){ return true; } })();
+if(EMBED){ cv.style.borderRadius = '0'; cv.style.boxShadow = 'none'; }
+let __vw = 0, __vh = 0;
 function fit(){
-  const s = Math.min(innerWidth/W, innerHeight/H) * 0.97;
+  __vw = innerWidth; __vh = innerHeight;
+  const s = Math.min(__vw/W, __vh/H) * (EMBED ? 1 : 0.97);
   cv.style.width  = (W*s)+'px';
   cv.style.height = (H*s)+'px';
 }
@@ -2104,6 +2112,7 @@ function __signalReadyIfPainted(now){
 
 let last = performance.now();
 function frame(now){
+  if(innerWidth !== __vw || innerHeight !== __vh) fit();  // catches every size change, no race
   const rawDt = Math.min(0.033, (now-last)/1000);
   last = now;
   let dt = rawDt;

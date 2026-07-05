@@ -431,35 +431,17 @@ $('#gameFullscreen')?.addEventListener('click', () => {
   const req = gameFrame.requestFullscreen || gameFrame.webkitRequestFullscreen || gameFrame.msRequestFullscreen;
   if (req) req.call(gameFrame);
 });
-// The game sizes its canvas in JS from its own iframe viewport, which races on
-// lazy-load (desktop) and can render zoomed/clipped until a reload. The frame
-// is always 16:9 and the canvas content is 16:9, so instead of fighting that
-// timing we inject a stylesheet into the iframe that forces the canvas to fill
-// the frame. A stylesheet !important rule beats the game's inline px sizing, so
-// it's immune to the race entirely (overlays are positioned relative to #stage,
-// so they follow). Injected from the parent only, so the standalone game is
-// untouched.
+// Click-to-play: the game NEVER boots on scroll. Visitors see the opaque
+// poster; only a Tap-to-Play click loads the iframe (behind the branded
+// loader, which lifts on the game's own 'hudu:ready' paint signal). This
+// both removes any chance of a boot-glitch flash during scrolling and stops
+// the game engine from running/rebooting in the background while browsing.
+// The game sizes its own canvas (aspect-preserving contain-fit, re-checked
+// every frame), so no parent-side sizing hacks are needed in any container.
 if (gameFrame) {
-  const injectFit = () => {
-    try {
-      const doc = gameFrame.contentDocument;
-      if (!doc || doc.getElementById('__embed-fit')) return;
-      const st = doc.createElement('style');
-      st.id = '__embed-fit';
-      st.textContent =
-        'html,body{width:100%!important;height:100%!important}' +
-        '#stage{position:absolute!important;inset:0!important;width:100%!important;height:100%!important}' +
-        '#game{width:100%!important;height:100%!important;border-radius:0!important}';
-      doc.head.appendChild(st);
-    } catch (e) { /* ignore */ }
-  };
-  // Click-to-play: the game NEVER boots on scroll. Visitors see the opaque
-  // poster; only a Tap-to-Play click loads the iframe (behind the branded
-  // loader, which lifts on the game's own 'hudu:ready' paint signal). This
-  // both removes any chance of a boot-glitch flash during scrolling and stops
-  // the game engine from running/rebooting in the background while browsing.
   const gameLoader = $('#gameLoader');
   const gamePoster = $('#gamePoster');
+  const gameScreen = $('.gaming__screen');
   const GAME_SRC = gameFrame.getAttribute('data-src');
   let revealed = false, safetyTimer = 0, gameStarted = false;
 
@@ -473,27 +455,44 @@ if (gameFrame) {
     if (e.source === gameFrame.contentWindow && e.data === 'hudu:ready') reveal();
   });
 
+  // Immersive mode: on touch devices the tiny inline band is a bad play
+  // surface, so Tap-to-Play expands the screen to a fixed full-viewport
+  // overlay (page scroll locked) with its own ✕. iOS has no iframe
+  // fullscreen API, so this is CSS-based and works everywhere.
+  const wantsImmersive = () => window.matchMedia('(pointer: coarse)').matches || window.innerWidth <= 760;
+  const enterImmersive = () => {
+    gameScreen?.classList.add('is-immersive');
+    document.documentElement.classList.add('game-lock');
+    if (lenis) lenis.stop();
+  };
+  const exitImmersive = () => {
+    gameScreen?.classList.remove('is-immersive');
+    document.documentElement.classList.remove('game-lock');
+    if (lenis) lenis.start();
+  };
+
   const bootGame = () => {
     if (gameStarted) return;
     gameStarted = true;
     revealed = false;
     gamePoster?.classList.add('is-hidden');
     gameLoader?.classList.remove('is-hidden');
+    if (wantsImmersive()) enterImmersive();
     gameFrame.src = GAME_SRC;
     clearTimeout(safetyTimer);
     safetyTimer = setTimeout(reveal, 8000); // last-resort unstick if 'hudu:ready' never arrives
   };
   gamePoster?.addEventListener('click', bootGame);
   $('#gameFullscreen')?.addEventListener('click', bootGame); // fullscreen from the poster state boots first
-  gameFrame.addEventListener('load', injectFit);
 
-  // Clean-out: stop the game (audio + loop) on Exit or when it scrolls out of
-  // view — about:blank tears down its audio + RAF, and the poster returns.
+  // Clean-out: stop the game (audio + loop) on ✕/Exit or when it scrolls out
+  // of view — about:blank tears down its audio + RAF, and the poster returns.
   const stopGame = () => {
     if (!gameStarted) return;
     gameStarted = false;
     revealed = false;
     clearTimeout(safetyTimer);
+    exitImmersive();
     gameFrame.src = 'about:blank';
     gameLoader?.classList.add('is-hidden');
     gamePoster?.classList.remove('is-hidden');
@@ -502,6 +501,7 @@ if (gameFrame) {
     if (!entries[0].isIntersecting) stopGame();
   }, { threshold: 0 }).observe(gameFrame);
   $('#gameExit')?.addEventListener('click', stopGame);
+  $('#gameClose')?.addEventListener('click', stopGame);
 }
 
 /* =========================================================

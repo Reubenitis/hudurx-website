@@ -540,6 +540,34 @@ section { position: relative; padding-block: clamp(80px, 12vw, 160px); }
 .gaming__loader-bolt { width: 52px; height: auto; filter: drop-shadow(0 0 16px rgba(255, 210, 0, 0.6)); animation: boltPulse 1s ease-in-out infinite; }
 .gaming__loader span { font-family: var(--mono); font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); }
 @keyframes boltPulse { 0%, 100% { transform: scale(0.86); opacity: 0.5; } 50% { transform: scale(1.12); opacity: 1; } }
+/* Immersive mode (touch devices): the game screen becomes a fixed, full-viewport
+   overlay when Tap-to-Play is hit, so phones get a real play surface instead of
+   a cramped inline band. The game letterboxes itself inside (aspect-safe). */
+.gaming__screen.is-immersive {
+  position: fixed; inset: 0; z-index: 2000; aspect-ratio: auto; border-radius: 0;
+}
+/* insurance: a transformed/filtered ancestor would trap position:fixed */
+.game-lock .gaming__stage, .game-lock .gaming__cabinet { transform: none !important; filter: none !important; }
+.game-lock, .game-lock body { overflow: hidden !important; }
+
+.gaming__close {
+  position: absolute; z-index: 6; display: none;
+  top: max(10px, env(safe-area-inset-top)); right: max(10px, env(safe-area-inset-right));
+  width: 42px; height: 42px; border-radius: 50%;
+  background: rgba(10, 6, 16, 0.82); border: 1.5px solid var(--hair); color: var(--bone);
+  font-size: 17px; line-height: 1; cursor: pointer;
+}
+.gaming__screen.is-immersive .gaming__close { display: grid; place-items: center; }
+.gaming__rotate {
+  display: none; position: absolute; left: 50%; bottom: max(16px, env(safe-area-inset-bottom)); transform: translateX(-50%);
+  z-index: 6; font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--muted); background: rgba(10, 6, 16, 0.72); padding: 8px 14px; border-radius: 100px; white-space: nowrap;
+  pointer-events: none;
+}
+@media (orientation: portrait) {
+  .gaming__screen.is-immersive .gaming__rotate { display: block; }
+}
+
 .gaming__bar {
   display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
   padding: 16px 6px 4px;
