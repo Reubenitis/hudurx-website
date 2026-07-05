@@ -319,6 +319,68 @@ section { position: relative; padding-block: clamp(80px, 12vw, 160px); }
 .manifesto__text span { display: block; }
 .manifesto__text em { font-style: normal; color: var(--acc); }
 .manifesto__text [data-reveal] { display: block; }
+
+/* ============================================================
+   "LOADING SCREEN." — game-style vertical loading fill
+   ------------------------------------------------------------
+   The glyphs read as a purple OUTLINE at rest, then a vibrant
+   fill rises bottom -> top with a thin bright scan-line leading
+   the edge (like a charging progress meter), holds full, drains
+   back to empty, holds, and loops. Pure CSS, GPU-light: a single
+   gradient sized 2x the text height and clipped to the glyphs
+   (background-clip:text); only its vertical POSITION animates, so
+   the fill is always perfectly contained inside each letter with
+   no bleed. Applies to the .kt-load word only ("ignite." is
+   unaffected). Layout/typography are untouched.
+   ============================================================ */
+.manifesto__text em.kt-load {
+  /* interior painted ONLY by the clipped gradient; outline always shows */
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  -webkit-text-stroke: clamp(1.5px, 0.22vw, 3px) var(--acc);
+
+  /* solid fill (bottom) -> soft glow -> bright scan-line -> transparent (top) */
+  background-image: linear-gradient(
+    to top,
+    var(--acc) 0%,
+    var(--acc) 44%,
+    #d9a6ff 47.5%,     /* pre-glow just under the edge */
+    #fbeeff 49.4%,     /* bright near-white scan-line core */
+    #fbeeff 50.6%,
+    #d9a6ff 52.5%,     /* post-glow just above the edge */
+    transparent 56%,
+    transparent 100%
+  );
+  background-size: 100% 200%;   /* 2x tall so it can slide fully through */
+  background-repeat: no-repeat;
+  background-position: 50% 0%;   /* start empty (window shows the transparent top) */
+  -webkit-background-clip: text;
+          background-clip: text;
+
+  animation: ktLoadFill 3s infinite;
+}
+
+@keyframes ktLoadFill {
+  /* FILL 0 -> 1.2s: premium ease — gentle charge-up, soft settle at the top */
+  0%     { background-position: 50% 0%;   animation-timing-function: cubic-bezier(0.5, 0, 0.2, 1); }
+  40%    { background-position: 50% 100%; animation-timing-function: linear; }
+  /* HOLD FULL 1.2 -> 1.8s */
+  60%    { background-position: 50% 100%; animation-timing-function: cubic-bezier(0.4, 0, 0.5, 1); }
+  /* DRAIN 1.8 -> 2.6s: smooth ease-in-out back down */
+  86.67% { background-position: 50% 0%;   animation-timing-function: linear; }
+  /* HOLD EMPTY 2.6 -> 3.0s */
+  100%   { background-position: 50% 0%; }
+}
+
+/* Reduced motion / no-JS safety: no animation, just solid purple like ignite. */
+@media (prefers-reduced-motion: reduce) {
+  .manifesto__text em.kt-load {
+    animation: none;
+    background-image: none;
+    -webkit-text-fill-color: var(--acc);
+    -webkit-text-stroke-width: 0;
+  }
+}
 .manifesto__sign { font-family: var(--mono); color: var(--muted); margin-top: 32px; letter-spacing: 0.08em; }
 
 /* =========================================================
