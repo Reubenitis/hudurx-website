@@ -353,16 +353,18 @@ section { position: relative; padding-block: clamp(80px, 12vw, 160px); }
   -webkit-background-clip: text;
           background-clip: text;
 
-  animation: ktLoadFill 3.4s infinite;
+  animation: ktLoadFill 7.8s infinite;
 }
 
 @keyframes ktLoadFill {
-  /* HOLD EMPTY (~0.4s) */
+  /* HOLD EMPTY (~0.5s) */
   0%      { background-position: 50% 0%; }
-  /* FILL (~2.4s) — premium charge-up ease, gentle settle at the top */
-  11.76%  { background-position: 50% 0%;   animation-timing-function: cubic-bezier(0.5, 0, 0.2, 1); }
-  82.35%  { background-position: 50% 100%; }
-  /* HOLD FULL (~0.6s). The animation then loops from 100% straight back to the
+  /* FILL (~6.5s) — slow, organic progress-bar climb: eases in, holds a steady
+     pace, then decelerates into a crawl near the top (the "almost there" of a
+     real load bar). */
+  6.41%   { background-position: 50% 0%;   animation-timing-function: cubic-bezier(0.3, 0, 0.15, 1); }
+  89.74%  { background-position: 50% 100%; }
+  /* HOLD FULL (~0.8s). The animation then loops from 100% straight back to the
      0% keyframe, which is an INSTANT jump full -> empty (no interpolation), so
      it snaps to empty and re-loads rather than draining/reversing. */
   100%    { background-position: 50% 100%; }
