@@ -163,6 +163,19 @@ $$('[data-reveal]').forEach((el) => {
   });
 });
 
+/* Kinetic "loading" fill on the manifesto's "loading screen." — starts once
+   the headline is in view, a beat after the line masks up (reduced-motion
+   users get it solid instantly via CSS). */
+const ktLoad = $('.manifesto__text em.kt-load');
+if (ktLoad && !prefersReduced) {
+  ScrollTrigger.create({
+    trigger: '.manifesto__text',
+    start: 'top 72%',
+    once: true,
+    onEnter: () => gsap.delayedCall(0.45, () => ktLoad.classList.add('is-filled')),
+  });
+}
+
 /* =========================================================
    PARALLAX — [data-parallax]
    ========================================================= */
