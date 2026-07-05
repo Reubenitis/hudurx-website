@@ -409,9 +409,13 @@ section { position: relative; padding-block: clamp(80px, 12vw, 160px); }
   animation: floaty 7s ease-in-out infinite; transition: background 0.6s;
 }
 .flavors__img {
-  /* portrait stick render on transparency — size by height so it fills the
-     square stage without overflowing; no radius needed on a cutout */
-  position: relative; z-index: 1; height: 96%; width: auto; max-width: 92%; object-fit: contain;
+  /* Portrait stick cutout. ABSOLUTE + margin:auto centering so the image is
+     out of flow and can NEVER drive the stage's height — otherwise its
+     percentage size and the stage's aspect-ratio form a feedback loop that
+     iOS Safari re-solves on every flavor switch, shrinking it each click.
+     Constrained by max-height/width against the stage's definite (1:1) box. */
+  position: absolute; inset: 0; margin: auto; z-index: 1;
+  width: auto; height: auto; max-height: 94%; max-width: 88%; object-fit: contain;
   transition: opacity 0.4s, transform 0.6s var(--ease);
   filter: drop-shadow(0 30px 60px rgba(0,0,0,0.55));
 }
@@ -737,7 +741,10 @@ section { position: relative; padding-block: clamp(80px, 12vw, 160px); }
      children (Doc layer stack), so without it the auto margins shrink it to
      content width = 0 and Doc vanishes on mobile */
   .hudu__media { order: -1; width: 100%; max-width: 460px; margin: 0 auto; }
-  .flavors__display { max-width: 460px; margin: 0 auto; }
+  /* width:100% is load-bearing: the stick image is absolutely positioned, so
+     without an explicit width the auto margins shrink this to content (0) and
+     the 1:1 stage collapses. */
+  .flavors__display { width: 100%; max-width: 460px; margin: 0 auto; }
   .army__quotes { grid-template-columns: 1fr; }
   .footer__cols { grid-template-columns: 1fr 1fr; }
 }
