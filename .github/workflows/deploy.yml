@@ -12,7 +12,9 @@ permissions:
 
 concurrency:
   group: pages
-  cancel-in-progress: true
+  # queue deploys instead of cancelling — cancelling a Pages deploy mid-flight
+  # wedges the deployment ("Deployment failed, try again later") on the next push
+  cancel-in-progress: false
 
 jobs:
   build:
