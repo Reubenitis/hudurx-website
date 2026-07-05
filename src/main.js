@@ -426,11 +426,6 @@ $('#enlistForm')?.addEventListener('submit', (e) => {
    GAME — embedded arcade (fullscreen + keep it scaled to its frame)
    ========================================================= */
 const gameFrame = $('#gameFrame');
-$('#gameFullscreen')?.addEventListener('click', () => {
-  if (!gameFrame) return;
-  const req = gameFrame.requestFullscreen || gameFrame.webkitRequestFullscreen || gameFrame.msRequestFullscreen;
-  if (req) req.call(gameFrame);
-});
 // Click-to-play: the game NEVER boots on scroll. Visitors see the opaque
 // poster; only a Tap-to-Play click loads the iframe (behind the branded
 // loader, which lifts on the game's own 'hudu:ready' paint signal). This
@@ -483,7 +478,15 @@ if (gameFrame) {
     safetyTimer = setTimeout(reveal, 8000); // last-resort unstick if 'hudu:ready' never arrives
   };
   gamePoster?.addEventListener('click', bootGame);
-  $('#gameFullscreen')?.addEventListener('click', bootGame); // fullscreen from the poster state boots first
+  // PLAY FULLSCREEN: on touch devices this routes into the immersive overlay
+  // (native iframe fullscreen would hide our ✕ with no way back on Android,
+  // and iOS doesn't support it at all). Desktop gets real fullscreen (Esc exits).
+  $('#gameFullscreen')?.addEventListener('click', () => {
+    bootGame();
+    if (wantsImmersive()) { enterImmersive(); return; }
+    const req = gameFrame.requestFullscreen || gameFrame.webkitRequestFullscreen || gameFrame.msRequestFullscreen;
+    if (req) req.call(gameFrame);
+  });
 
   // Clean-out: stop the game (audio + loop) on ✕/Exit or when it scrolls out
   // of view — about:blank tears down its audio + RAF, and the poster returns.
