@@ -339,16 +339,12 @@ section { position: relative; padding-block: clamp(80px, 12vw, 160px); }
   -webkit-text-fill-color: transparent;
   -webkit-text-stroke: clamp(1.5px, 0.22vw, 3px) var(--acc);
 
-  /* solid fill (bottom) -> soft glow -> bright scan-line -> transparent (top) */
+  /* clean purple fill with a soft top edge — no bright/white highlight */
   background-image: linear-gradient(
     to top,
     var(--acc) 0%,
-    var(--acc) 44%,
-    #d9a6ff 47.5%,     /* pre-glow just under the edge */
-    #fbeeff 49.4%,     /* bright near-white scan-line core */
-    #fbeeff 50.6%,
-    #d9a6ff 52.5%,     /* post-glow just above the edge */
-    transparent 56%,
+    var(--acc) 49%,
+    transparent 53%,
     transparent 100%
   );
   background-size: 100% 200%;   /* 2x tall so it can slide fully through */
@@ -357,19 +353,19 @@ section { position: relative; padding-block: clamp(80px, 12vw, 160px); }
   -webkit-background-clip: text;
           background-clip: text;
 
-  animation: ktLoadFill 3s infinite;
+  animation: ktLoadFill 3.4s infinite;
 }
 
 @keyframes ktLoadFill {
-  /* FILL 0 -> 1.2s: premium ease — gentle charge-up, soft settle at the top */
-  0%     { background-position: 50% 0%;   animation-timing-function: cubic-bezier(0.5, 0, 0.2, 1); }
-  40%    { background-position: 50% 100%; animation-timing-function: linear; }
-  /* HOLD FULL 1.2 -> 1.8s */
-  60%    { background-position: 50% 100%; animation-timing-function: cubic-bezier(0.4, 0, 0.5, 1); }
-  /* DRAIN 1.8 -> 2.6s: smooth ease-in-out back down */
-  86.67% { background-position: 50% 0%;   animation-timing-function: linear; }
-  /* HOLD EMPTY 2.6 -> 3.0s */
-  100%   { background-position: 50% 0%; }
+  /* HOLD EMPTY (~0.4s) */
+  0%      { background-position: 50% 0%; }
+  /* FILL (~2.4s) — premium charge-up ease, gentle settle at the top */
+  11.76%  { background-position: 50% 0%;   animation-timing-function: cubic-bezier(0.5, 0, 0.2, 1); }
+  82.35%  { background-position: 50% 100%; }
+  /* HOLD FULL (~0.6s). The animation then loops from 100% straight back to the
+     0% keyframe, which is an INSTANT jump full -> empty (no interpolation), so
+     it snaps to empty and re-loads rather than draining/reversing. */
+  100%    { background-position: 50% 100%; }
 }
 
 /* Reduced motion / no-JS safety: no animation, just solid purple like ignite. */
