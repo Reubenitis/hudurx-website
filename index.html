@@ -297,16 +297,25 @@
         <div class="gaming__stage reveal-up">
           <div class="gaming__cabinet">
             <div class="gaming__screen">
+              <!-- The game is NOT loaded on scroll — the poster below is what
+                   visitors see. The iframe only gets its real src when the
+                   poster's Tap-to-Play is clicked, so no boot frame can ever
+                   flash during scrolling (and no game runs in the background). -->
               <iframe
                 class="gaming__frame"
                 id="gameFrame"
-                src="./game/index.html"
+                src="about:blank"
+                data-src="./game/index.html"
                 title="HuduRX — Fight the Z's"
-                loading="lazy"
                 allow="autoplay; fullscreen"
                 allowfullscreen
               ></iframe>
-              <div class="gaming__loader" id="gameLoader" aria-hidden="true">
+              <button class="gaming__poster" id="gamePoster" type="button" aria-label="Load and play Fight the Z's">
+                <img class="gaming__poster-logo" src="./img/thunderstix-logo.svg" alt="" />
+                <span class="gaming__poster-cta">⚡ Tap to Play ⚡</span>
+                <span class="gaming__poster-sub">Free browser game · sound on</span>
+              </button>
+              <div class="gaming__loader is-hidden" id="gameLoader" aria-hidden="true">
                 <img class="gaming__loader-bolt" src="./img/lightning-bolt.svg" alt="" />
                 <span>Charging the thunder…</span>
               </div>

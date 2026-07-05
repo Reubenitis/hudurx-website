@@ -453,74 +453,55 @@ if (gameFrame) {
       doc.head.appendChild(st);
     } catch (e) { /* ignore */ }
   };
-  // The branded loader must stay over the game until the game has actually
-  // PAINTED a real title frame — not merely until its assets are cached. The
-  // only signal that means "the game drew something good" is the 'hudu:ready'
-  // message the game posts after its fonts + art are in and a frame rendered.
+  // Click-to-play: the game NEVER boots on scroll. Visitors see the opaque
+  // poster; only a Tap-to-Play click loads the iframe (behind the branded
+  // loader, which lifts on the game's own 'hudu:ready' paint signal). This
+  // both removes any chance of a boot-glitch flash during scrolling and stops
+  // the game engine from running/rebooting in the background while browsing.
   const gameLoader = $('#gameLoader');
-  let revealed = false, safetyTimer = 0;
+  const gamePoster = $('#gamePoster');
+  const GAME_SRC = gameFrame.getAttribute('data-src');
+  let revealed = false, safetyTimer = 0, gameStarted = false;
+
   const reveal = () => {
     if (revealed) return;
     revealed = true;
     clearTimeout(safetyTimer);
     setTimeout(() => gameLoader && gameLoader.classList.add('is-hidden'), 250);
   };
-  // Primary (and effectively only) trigger — the game itself says it painted.
   window.addEventListener('message', (e) => {
     if (e.source === gameFrame.contentWindow && e.data === 'hudu:ready') reveal();
   });
-  // Warm the browser cache with the game's title art so the game boots faster.
-  // This deliberately does NOT hide the loader: cache-warmed != painted, and
-  // hiding on this (as it used to) is exactly what lifted the loader mid-boot.
-  const preloadAssets = () => {
-    ['./game/assets/HuduRX_Thunderstix_Landing_Page_BKGD.png',
-     './game/assets/Hudu_Pattern.svg',
-     './game/assets/ThunderStix_Game_Logo.svg',
-     './game/assets/Doc_Hudu.svg'].forEach((src) => { const im = new Image(); im.src = src; });
-  };
 
-  // Only act once the REAL game is in the iframe — a lazy iframe's initial
-  // about:blank reports readyState 'complete', which would hide the loader early.
-  const gameDocReady = () => {
-    try { return !!(gameFrame.contentDocument && gameFrame.contentDocument.querySelector('#game')); }
-    catch (e) { return false; }
-  };
-  let gameStarted = false, exited = false;
-  const onGameReady = () => {
-    if (!gameDocReady()) return;
+  const bootGame = () => {
+    if (gameStarted) return;
     gameStarted = true;
-    injectFit();
-    preloadAssets();
+    revealed = false;
+    gamePoster?.classList.add('is-hidden');
+    gameLoader?.classList.remove('is-hidden');
+    gameFrame.src = GAME_SRC;
     clearTimeout(safetyTimer);
     safetyTimer = setTimeout(reveal, 8000); // last-resort unstick if 'hudu:ready' never arrives
   };
-  gameFrame.addEventListener('load', onGameReady);
-  if (gameDocReady()) onGameReady();
+  gamePoster?.addEventListener('click', bootGame);
+  $('#gameFullscreen')?.addEventListener('click', bootGame); // fullscreen from the poster state boots first
+  gameFrame.addEventListener('load', injectFit);
 
-  // Clean-out: fully stop the game (audio + loop) when it scrolls out of view or
-  // on Exit — pointing the iframe at about:blank tears down its audio + RAF loop.
-  const GAME_SRC = gameFrame.getAttribute('src');
+  // Clean-out: stop the game (audio + loop) on Exit or when it scrolls out of
+  // view — about:blank tears down its audio + RAF, and the poster returns.
   const stopGame = () => {
+    if (!gameStarted) return;
     gameStarted = false;
     revealed = false;
     clearTimeout(safetyTimer);
-    if (gameLoader) gameLoader.classList.remove('is-hidden');
     gameFrame.src = 'about:blank';
-  };
-  const startGame = () => {
-    if (gameFrame.getAttribute('src') === 'about:blank') gameFrame.src = GAME_SRC;
+    gameLoader?.classList.add('is-hidden');
+    gamePoster?.classList.remove('is-hidden');
   };
   new IntersectionObserver((entries) => {
-    if (entries[0].isIntersecting) { if (!exited) startGame(); }
-    else { exited = false; if (gameStarted) stopGame(); }
+    if (!entries[0].isIntersecting) stopGame();
   }, { threshold: 0 }).observe(gameFrame);
-
-  $('#gameExit')?.addEventListener('click', () => {
-    exited = true;
-    stopGame();
-    if (lenis) lenis.scrollTo('#hudu', { duration: 1 });
-    else document.querySelector('#hudu')?.scrollIntoView({ behavior: 'smooth' });
-  });
+  $('#gameExit')?.addEventListener('click', stopGame);
 }
 
 /* =========================================================
@@ -537,7 +518,9 @@ if (gameFrame) {
 
   const ctx = fx.getContext('2d');
   const COLORS = ['#6eff3d', '#b026ff', '#ffd002']; // green · purple · gold
-  let W = 0, H = 0, dpr = Math.min(2, window.devicePixelRatio || 1);
+  // dpr 1 on purpose: the sparkles are soft glows, and a hi-dpi backing store
+  // quadruples the pixels pushed per frame for no visible gain.
+  let W = 0, H = 0, dpr = 1;
   const resize = () => {
     const r = media.getBoundingClientRect();
     if (!r.width || !r.height) return; // layout not ready yet — retry on IO/resize
@@ -605,10 +588,14 @@ if (gameFrame) {
       p.x += p.vx; p.y += p.vy; p.vy += 0.02; p.vx *= 0.99;
       p.life -= p.decay; p.rot += p.spin;
       ctx.save();
-      ctx.globalAlpha = Math.max(0, p.life);
       ctx.translate(p.x, p.y); ctx.rotate(p.rot);
-      ctx.fillStyle = p.col; ctx.shadowColor = p.col; ctx.shadowBlur = 12;
-      spark(p.size * (0.6 + p.life * 0.6));
+      ctx.fillStyle = p.col;
+      // two-pass glow (big faint halo + bright core) — reads the same as
+      // shadowBlur but costs a fraction of it; canvas shadows are a GPU hog
+      const s = p.size * (0.6 + p.life * 0.6);
+      const a = Math.max(0, p.life);
+      ctx.globalAlpha = a * 0.28; spark(s * 2.2);
+      ctx.globalAlpha = a; spark(s);
       ctx.restore();
     }
     ctx.globalCompositeOperation = 'source-over';
