@@ -765,6 +765,9 @@ section { position: relative; padding-block: clamp(80px, 12vw, 160px); }
 
 @media (max-width: 760px) {
   .ritual__steps, .stats__grid, .shop__grid { grid-template-columns: 1fr; }
+  .rstep { text-align: center; }
+  .rstep__icon { margin-inline: auto; }
+  .rstep p { margin-inline: auto; }
   .soon { flex-direction: column; text-align: center; }
   .soon p { margin-inline: auto; }
   .stat::after { display: none; }
