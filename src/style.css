@@ -561,6 +561,12 @@ section { position: relative; padding-block: clamp(80px, 12vw, 160px); }
   box-shadow: 0 4px 18px rgba(0, 0, 0, 0.6);
 }
 .gaming__screen.is-immersive .gaming__close { display: grid; place-items: center; }
+/* native fullscreen (container-level): browser chrome is gone, so the ✕ is the
+   way out — keep the rules separate; an unsupported pseudo drops a whole list */
+.gaming__screen:fullscreen { border-radius: 0; aspect-ratio: auto; }
+.gaming__screen:fullscreen .gaming__close { display: grid; place-items: center; }
+.gaming__screen:-webkit-full-screen { border-radius: 0; }
+.gaming__screen:-webkit-full-screen .gaming__close { display: grid; place-items: center; }
 .gaming__rotate {
   display: none; position: absolute; left: 50%; bottom: max(16px, env(safe-area-inset-bottom)); transform: translateX(-50%);
   z-index: 6; font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;

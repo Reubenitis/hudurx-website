@@ -452,15 +452,30 @@ if (gameFrame) {
 
   // Immersive mode: on touch devices the tiny inline band is a bad play
   // surface, so Tap-to-Play expands the screen to a fixed full-viewport
-  // overlay (page scroll locked) with its own ✕. iOS has no iframe
-  // fullscreen API, so this is CSS-based and works everywhere.
+  // overlay (page scroll locked) with its own ✕ — and, where the browser
+  // allows it (iOS 16.4+, Android, desktop), we ALSO request native
+  // fullscreen on the .gaming__screen CONTAINER, which hides the browser's
+  // URL bar/tabs entirely while keeping our ✕ inside the fullscreened
+  // subtree. If the request is denied, the CSS overlay stands on its own.
   const wantsImmersive = () => window.matchMedia('(pointer: coarse)').matches || window.innerWidth <= 760;
+  const goFullscreen = (el) => {
+    const fn = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+    if (!fn) return;
+    try { const p = fn.call(el); if (p && p.catch) p.catch(() => {}); } catch (e) { /* unsupported — overlay covers it */ }
+  };
+  const leaveFullscreen = () => {
+    if (!(document.fullscreenElement || document.webkitFullscreenElement)) return;
+    const fn = document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen;
+    try { const p = fn.call(document); if (p && p.catch) p.catch(() => {}); } catch (e) { /* ignore */ }
+  };
   const enterImmersive = () => {
     gameScreen?.classList.add('is-immersive');
     document.documentElement.classList.add('game-lock');
     if (lenis) lenis.stop();
+    if (gameScreen) goFullscreen(gameScreen); // hide browser chrome too, where supported
   };
   const exitImmersive = () => {
+    leaveFullscreen();
     gameScreen?.classList.remove('is-immersive');
     document.documentElement.classList.remove('game-lock');
     if (lenis) lenis.start();
@@ -478,14 +493,13 @@ if (gameFrame) {
     safetyTimer = setTimeout(reveal, 8000); // last-resort unstick if 'hudu:ready' never arrives
   };
   gamePoster?.addEventListener('click', bootGame);
-  // PLAY FULLSCREEN: on touch devices this routes into the immersive overlay
-  // (native iframe fullscreen would hide our ✕ with no way back on Android,
-  // and iOS doesn't support it at all). Desktop gets real fullscreen (Esc exits).
+  // PLAY FULLSCREEN: fullscreen the CONTAINER (loader + ✕ stay visible inside)
+  // on every device; touch devices additionally get the immersive overlay as
+  // the fallback state if the fullscreen request is denied.
   $('#gameFullscreen')?.addEventListener('click', () => {
     bootGame();
-    if (wantsImmersive()) { enterImmersive(); return; }
-    const req = gameFrame.requestFullscreen || gameFrame.webkitRequestFullscreen || gameFrame.msRequestFullscreen;
-    if (req) req.call(gameFrame);
+    if (wantsImmersive()) { enterImmersive(); return; } // enterImmersive requests fullscreen itself
+    if (gameScreen) goFullscreen(gameScreen);
   });
 
   // Clean-out: stop the game (audio + loop) on ✕/Exit or when it scrolls out
