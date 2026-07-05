@@ -536,11 +536,20 @@ if (gameFrame) {
    smooths the seeks. Full video data only fetches once the section nears.
    ========================================================= */
 const thunderVid = $('#thunderVid');
-if (thunderVid && !prefersReduced) {
-  let dur = 0, target = 0, current = 0, ticking = false;
+if (thunderVid) {
+  // The clip OPENS on a black frame, so the element must never rest at t=0:
+  // park the playhead on a bright lightning frame as the poster state. The
+  // scroll scrub takes over from the first real update; under reduced motion
+  // (or if the scrub never runs) the bright still remains.
+  const HERO_T = 3;
+  let dur = 0, target = 0, current = HERO_T, ticking = false, scrubbed = false;
   const readDur = () => { dur = thunderVid.duration || 0; };
-  thunderVid.addEventListener('loadedmetadata', readDur);
-  if (thunderVid.readyState >= 1) readDur();
+  const poster = () => {
+    if (scrubbed || !dur) return;
+    try { thunderVid.currentTime = Math.min(HERO_T, dur - 0.1); } catch (e) { /* ignore */ }
+  };
+  thunderVid.addEventListener('loadedmetadata', () => { readDur(); poster(); });
+  if (thunderVid.readyState >= 1) { readDur(); poster(); }
 
   // metadata-only until the section approaches, then buffer the whole clip
   new IntersectionObserver((entries, io) => {
@@ -550,22 +559,25 @@ if (thunderVid && !prefersReduced) {
     try { thunderVid.load(); } catch (e) { /* ignore */ }
   }, { rootMargin: '600px 0px' }).observe(thunderVid);
 
-  const tick = () => {
-    current += (target - current) * 0.12;
-    if (Math.abs(target - current) < 0.005) { current = target; ticking = false; }
-    else requestAnimationFrame(tick);
-    try { thunderVid.currentTime = current; } catch (e) { /* not seekable yet */ }
-  };
-  ScrollTrigger.create({
-    trigger: '.product__media',
-    start: 'top bottom',
-    end: 'bottom top',
-    onUpdate: (self) => {
-      if (!dur) return;
-      target = self.progress * dur;
-      if (!ticking) { ticking = true; requestAnimationFrame(tick); }
-    },
-  });
+  if (!prefersReduced) {
+    const tick = () => {
+      current += (target - current) * 0.12;
+      if (Math.abs(target - current) < 0.005) { current = target; ticking = false; }
+      else requestAnimationFrame(tick);
+      try { thunderVid.currentTime = current; } catch (e) { /* not seekable yet */ }
+    };
+    ScrollTrigger.create({
+      trigger: '.product__media',
+      start: 'top bottom',
+      end: 'bottom top',
+      onUpdate: (self) => {
+        if (!dur) return;
+        scrubbed = true;
+        target = self.progress * dur;
+        if (!ticking) { ticking = true; requestAnimationFrame(tick); }
+      },
+    });
+  }
 }
 
 /* =========================================================
