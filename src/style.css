@@ -353,7 +353,7 @@ section { position: relative; padding-block: clamp(80px, 12vw, 160px); }
   -webkit-background-clip: text;
           background-clip: text;
 
-  animation: ktLoadFill 14.3s infinite;
+  animation: ktLoadFill 15.5s infinite;
 }
 
 @keyframes ktLoadFill {
@@ -362,11 +362,11 @@ section { position: relative; padding-block: clamp(80px, 12vw, 160px); }
   /* FILL (~13s) — slow, organic progress-bar climb: eases in, holds a steady
      pace, then decelerates into a crawl near the top (the "almost there" of a
      real load bar). */
-  3.50%   { background-position: 50% 0%;   animation-timing-function: cubic-bezier(0.3, 0, 0.15, 1); }
-  94.41%  { background-position: 50% 100%; }
-  /* HOLD FULL (~0.8s). The animation then loops from 100% straight back to the
-     0% keyframe, which is an INSTANT jump full -> empty (no interpolation), so
-     it snaps to empty and re-loads rather than draining/reversing. */
+  3.23%   { background-position: 50% 0%;   animation-timing-function: cubic-bezier(0.3, 0, 0.15, 1); }
+  87.10%  { background-position: 50% 100%; }
+  /* HOLD FULL (~2s) on the solid purple. The animation then loops from 100%
+     straight back to the 0% keyframe — an INSTANT jump full -> empty (no
+     interpolation) — so it snaps back to the outline and re-loads. */
   100%    { background-position: 50% 100%; }
 }
 
