@@ -319,25 +319,6 @@ section { position: relative; padding-block: clamp(80px, 12vw, 160px); }
 .manifesto__text span { display: block; }
 .manifesto__text em { font-style: normal; color: var(--acc); }
 .manifesto__text [data-reveal] { display: block; }
-/* "loading screen." literally loads: outlined purple that fills solid
-   left-to-right (a solid-purple gradient clipped to the glyphs, its width
-   animated 0 -> 100%). Filled state == solid --acc, matching the other em. */
-.manifesto__text em.kt-load {
-  color: transparent;
-  -webkit-text-fill-color: transparent;
-  -webkit-text-stroke: clamp(1.5px, 0.22vw, 3px) var(--acc);
-  background-image: linear-gradient(var(--acc), var(--acc));
-  background-repeat: no-repeat;
-  background-position: left center;
-  background-size: 0% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  transition: background-size 1.25s cubic-bezier(0.72, 0, 0.24, 1);
-}
-.manifesto__text em.kt-load.is-filled { background-size: 100% 100%; }
-@media (prefers-reduced-motion: reduce) {
-  .manifesto__text em.kt-load { background-size: 100% 100%; transition: none; }
-}
 .manifesto__sign { font-family: var(--mono); color: var(--muted); margin-top: 32px; letter-spacing: 0.08em; }
 
 /* =========================================================
