@@ -529,6 +529,36 @@ if (gameFrame) {
 }
 
 /* =========================================================
+   THUNDER VIDEO — reliable autoplay loop
+   The HTML autoplay attribute alone is flaky (data-saver / background-tab
+   policies leave it paused on the clip's black opening frame). So: force
+   play() when it enters view (muted play needs no gesture), pause when it
+   leaves (perf), park on a bright frame if play is ever blocked, and retry
+   on the first user interaction as a last resort.
+   ========================================================= */
+const thunderVid = $('#thunderVid');
+if (thunderVid) {
+  const play = () => { const p = thunderVid.play(); if (p && p.catch) p.catch(() => {}); };
+  const parkBright = () => {
+    // only if it isn't actually running — avoids fighting normal playback
+    if (thunderVid.paused && thunderVid.readyState >= 1 && thunderVid.currentTime < 0.2) {
+      try { thunderVid.currentTime = Math.min(3, (thunderVid.duration || 3) - 0.1); } catch (e) { /* ignore */ }
+    }
+  };
+  thunderVid.addEventListener('loadedmetadata', parkBright);
+  if (thunderVid.readyState >= 1) parkBright();
+
+  new IntersectionObserver((entries) => {
+    if (entries[0].isIntersecting) play();
+    else thunderVid.pause();
+  }, { threshold: 0.2 }).observe(thunderVid);
+
+  const retry = () => { play(); window.removeEventListener('pointerdown', retry); window.removeEventListener('touchstart', retry); };
+  window.addEventListener('pointerdown', retry, { passive: true });
+  window.addEventListener('touchstart', retry, { passive: true });
+}
+
+/* =========================================================
    DOC HUDU — cursor reaction + magical particle emitter
    Doc leans/drifts toward the pointer and trails green/purple/gold
    sparkles. JS owns the img transform (float bob + tilt); a canvas
