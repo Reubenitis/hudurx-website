@@ -360,20 +360,25 @@ const FLAVORS = {
     desc: 'Dark, electric and a little bit cursed. Deep grape with a tart violet snap that hits like a power chord.',
     notes: ['Black grape', 'Tart snap', 'Purple haze'],
     acc: '#b026ff', glow: 'rgba(176,38,255,0.55)',
+    img: './img/flavor-grape.webp', alt: 'ThunderStix Grape Gambit stick pack',
   },
   coco: {
     idx: '02 / 03', title: 'Pineapple Coco-Loco', volt: '200mg',
     desc: 'Tropical and unhinged. Sweet pineapple crashes into creamy coconut — then the thunder rolls in.',
     notes: ['Sweet pineapple', 'Creamy coconut', 'Tropic thunder'],
     acc: '#ffd002', glow: 'rgba(255,208,2,0.5)',
+    img: './img/flavor-pineapple.webp', alt: 'ThunderStix Pineapple Coco-Loco stick pack',
   },
   lime: {
     idx: '03 / 03', title: 'Lime Lazarus', volt: '200mg',
     desc: 'Back-from-the-dead crisp. Cold, clean lime that resurrects you mid-slump — no water, no mercy.',
     notes: ['Crisp lime', 'Ice-cold finish', 'Risen again'],
     acc: '#6eff3d', glow: 'rgba(110,255,61,0.45)',
+    img: './img/flavor-lime.webp', alt: 'ThunderStix Lime Lazarus stick pack',
   },
 };
+// pre-warm all three pack renders so flavor switches never flash
+Object.values(FLAVORS).forEach((f) => { const im = new Image(); im.src = f.img; });
 const flavorSection = $('#flavors');
 const flavorImg = $('#flavorImg');
 function setFlavor(key) {
@@ -388,6 +393,8 @@ function setFlavor(key) {
   $('#flavorNotes').innerHTML = f.notes.map((n) => `<li>${n}</li>`).join('');
   // image swap pop
   if (flavorImg) {
+    flavorImg.src = f.img;
+    flavorImg.alt = f.alt;
     flavorImg.classList.add('is-swap');
     setTimeout(() => flavorImg.classList.remove('is-swap'), 260);
   }
@@ -519,6 +526,46 @@ if (gameFrame) {
   }, { threshold: 0 }).observe(gameFrame);
   $('#gameExit')?.addEventListener('click', stopGame);
   $('#gameClose')?.addEventListener('click', stopGame);
+}
+
+/* =========================================================
+   THUNDER VIDEO — scroll-scrubbed
+   The product video's playhead is driven by scroll: as the section moves
+   through the viewport its progress maps to currentTime, so the lightning
+   pours forward on scroll-down and rewinds on scroll-up. A small lerp
+   smooths the seeks. Full video data only fetches once the section nears.
+   ========================================================= */
+const thunderVid = $('#thunderVid');
+if (thunderVid && !prefersReduced) {
+  let dur = 0, target = 0, current = 0, ticking = false;
+  const readDur = () => { dur = thunderVid.duration || 0; };
+  thunderVid.addEventListener('loadedmetadata', readDur);
+  if (thunderVid.readyState >= 1) readDur();
+
+  // metadata-only until the section approaches, then buffer the whole clip
+  new IntersectionObserver((entries, io) => {
+    if (!entries[0].isIntersecting) return;
+    io.disconnect();
+    thunderVid.preload = 'auto';
+    try { thunderVid.load(); } catch (e) { /* ignore */ }
+  }, { rootMargin: '600px 0px' }).observe(thunderVid);
+
+  const tick = () => {
+    current += (target - current) * 0.12;
+    if (Math.abs(target - current) < 0.005) { current = target; ticking = false; }
+    else requestAnimationFrame(tick);
+    try { thunderVid.currentTime = current; } catch (e) { /* not seekable yet */ }
+  };
+  ScrollTrigger.create({
+    trigger: '.product__media',
+    start: 'top bottom',
+    end: 'bottom top',
+    onUpdate: (self) => {
+      if (!dur) return;
+      target = self.progress * dur;
+      if (!ticking) { ticking = true; requestAnimationFrame(tick); }
+    },
+  });
 }
 
 /* =========================================================

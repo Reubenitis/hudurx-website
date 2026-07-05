@@ -142,7 +142,18 @@
         <div class="product__grid">
           <div class="product__media" data-parallax-wrap>
             <div class="product__glow"></div>
-            <img src="./img/thunderstix-packs.webp" alt="ThunderStix stick-pack boxes — Grape Gambit, Pineapple Coco-Loco, Lime Lazarus" />
+            <!-- scroll-scrubbed: main.js maps section scroll progress to
+                 currentTime, so it plays forward/backward as you scroll -->
+            <video
+              class="product__video"
+              id="thunderVid"
+              src="./img/Grape_Lightning.mp4"
+              muted
+              playsinline
+              preload="metadata"
+              disablepictureinpicture
+              aria-label="ThunderStix Grape Gambit stick with lightning splash"
+            ></video>
             <div class="product__badge product__badge--a">200mg / Stick</div>
             <div class="product__badge product__badge--b">Tear &amp; Pour</div>
           </div>
@@ -221,7 +232,7 @@
         <div class="flavors__stage">
           <div class="flavors__display">
             <div class="flavors__halo"></div>
-            <img src="./img/thunderstix-packs.webp" alt="ThunderStix flavor lineup" class="flavors__img" id="flavorImg" />
+            <img src="./img/flavor-grape.webp" alt="ThunderStix Grape Gambit stick pack" class="flavors__img" id="flavorImg" />
             <div class="flavors__voltage"><span>Caffeine</span><b id="flavorVolt">200mg</b></div>
           </div>
 

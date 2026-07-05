@@ -333,7 +333,8 @@ section { position: relative; padding-block: clamp(80px, 12vw, 160px); }
   position: absolute; inset: -10% -6%; z-index: 0;
   background: radial-gradient(60% 60% at 50% 45%, var(--acc-glow), transparent 70%); filter: blur(30px); opacity: 0.7;
 }
-.product__media img { position: relative; z-index: 1; width: 100%; filter: drop-shadow(0 30px 60px rgba(0,0,0,0.6)); border-radius: 6px; will-change: transform; animation: tubFloat 7s ease-in-out infinite; }
+.product__media img,
+.product__video { position: relative; z-index: 1; width: 100%; filter: drop-shadow(0 30px 60px rgba(0,0,0,0.6)); border-radius: 6px; will-change: transform; animation: tubFloat 7s ease-in-out infinite; display: block; }
 /* minimal organic float-bob for the tubs */
 @keyframes tubFloat {
   0%   { transform: translate(0, 0) rotate(0deg); }
@@ -415,7 +416,10 @@ section { position: relative; padding-block: clamp(80px, 12vw, 160px); }
   animation: floaty 7s ease-in-out infinite; transition: background 0.6s;
 }
 .flavors__img {
-  position: relative; z-index: 1; width: 92%; border-radius: 8px; transition: opacity 0.4s, transform 0.6s var(--ease);
+  /* portrait stick render on transparency — size by height so it fills the
+     square stage without overflowing; no radius needed on a cutout */
+  position: relative; z-index: 1; height: 96%; width: auto; max-width: 92%; object-fit: contain;
+  transition: opacity 0.4s, transform 0.6s var(--ease);
   filter: drop-shadow(0 30px 60px rgba(0,0,0,0.55));
 }
 .flavors__img.is-swap { opacity: 0; transform: scale(0.96) rotate(-2deg); }
