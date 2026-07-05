@@ -529,58 +529,6 @@ if (gameFrame) {
 }
 
 /* =========================================================
-   THUNDER VIDEO — scroll-scrubbed
-   The product video's playhead is driven by scroll: as the section moves
-   through the viewport its progress maps to currentTime, so the lightning
-   pours forward on scroll-down and rewinds on scroll-up. A small lerp
-   smooths the seeks. Full video data only fetches once the section nears.
-   ========================================================= */
-const thunderVid = $('#thunderVid');
-if (thunderVid) {
-  // The clip OPENS on a black frame, so the element must never rest at t=0:
-  // park the playhead on a bright lightning frame as the poster state. The
-  // scroll scrub takes over from the first real update; under reduced motion
-  // (or if the scrub never runs) the bright still remains.
-  const HERO_T = 3;
-  let dur = 0, target = 0, current = HERO_T, ticking = false, scrubbed = false;
-  const readDur = () => { dur = thunderVid.duration || 0; };
-  const poster = () => {
-    if (scrubbed || !dur) return;
-    try { thunderVid.currentTime = Math.min(HERO_T, dur - 0.1); } catch (e) { /* ignore */ }
-  };
-  thunderVid.addEventListener('loadedmetadata', () => { readDur(); poster(); });
-  if (thunderVid.readyState >= 1) { readDur(); poster(); }
-
-  // metadata-only until the section approaches, then buffer the whole clip
-  new IntersectionObserver((entries, io) => {
-    if (!entries[0].isIntersecting) return;
-    io.disconnect();
-    thunderVid.preload = 'auto';
-    try { thunderVid.load(); } catch (e) { /* ignore */ }
-  }, { rootMargin: '600px 0px' }).observe(thunderVid);
-
-  if (!prefersReduced) {
-    const tick = () => {
-      current += (target - current) * 0.12;
-      if (Math.abs(target - current) < 0.005) { current = target; ticking = false; }
-      else requestAnimationFrame(tick);
-      try { thunderVid.currentTime = current; } catch (e) { /* not seekable yet */ }
-    };
-    ScrollTrigger.create({
-      trigger: '.product__media',
-      start: 'top bottom',
-      end: 'bottom top',
-      onUpdate: (self) => {
-        if (!dur) return;
-        scrubbed = true;
-        target = self.progress * dur;
-        if (!ticking) { ticking = true; requestAnimationFrame(tick); }
-      },
-    });
-  }
-}
-
-/* =========================================================
    DOC HUDU — cursor reaction + magical particle emitter
    Doc leans/drifts toward the pointer and trails green/purple/gold
    sparkles. JS owns the img transform (float bob + tilt); a canvas

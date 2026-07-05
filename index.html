@@ -142,15 +142,16 @@
         <div class="product__grid">
           <div class="product__media" data-parallax-wrap>
             <div class="product__glow"></div>
-            <!-- scroll-scrubbed: main.js maps section scroll progress to
-                 currentTime, so it plays forward/backward as you scroll -->
+            <!-- plain muted autoplay loop — no scripting, works everywhere -->
             <video
               class="product__video"
               id="thunderVid"
               src="./img/Grape_Lightning.mp4"
+              autoplay
               muted
+              loop
               playsinline
-              preload="metadata"
+              preload="auto"
               disablepictureinpicture
               aria-label="ThunderStix Grape Gambit stick with lightning splash"
             ></video>
