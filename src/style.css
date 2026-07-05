@@ -326,7 +326,8 @@ section { position: relative; padding-block: clamp(80px, 12vw, 160px); }
    ========================================================= */
 .product__grid {
   max-width: var(--maxw); margin: 0 auto; padding-inline: var(--gut);
-  display: grid; grid-template-columns: 1.05fr 1fr; gap: clamp(40px, 6vw, 90px); align-items: center;
+  /* start-aligned so the video's top edge lines up with the lead copy's top */
+  display: grid; grid-template-columns: 1.05fr 1fr; gap: clamp(40px, 6vw, 90px); align-items: start;
 }
 .product__media { position: relative; }
 .product__glow {
