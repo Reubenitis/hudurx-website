@@ -194,7 +194,7 @@ body.loaded .loader { opacity: 0; visibility: hidden; transition: opacity 0.7s, 
 .nav__links { display: flex; gap: 30px; }
 .nav__links a {
   font-family: var(--mono); font-size: 12.5px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted);
-  position: relative; padding: 4px 0; transition: color 0.25s;
+  position: relative; padding: 4px 0; transition: color 0.25s; white-space: nowrap;
 }
 .nav__links a::after {
   content: ""; position: absolute; left: 0; bottom: 0; height: 1.5px; width: 0; background: var(--acc); transition: width 0.3s var(--ease);
@@ -700,7 +700,11 @@ section { position: relative; padding-block: clamp(80px, 12vw, 160px); }
   .army__quotes { grid-template-columns: 1fr; }
   .footer__cols { grid-template-columns: 1fr 1fr; }
 }
-@media (max-width: 760px) {
+/* Collapse the nav to the hamburger BEFORE the links would wrap onto a second
+   baseline. The logo + 6 links + CTA need ~1010px to sit on one line, so the
+   switch happens at 1080. This is its OWN query (separate from the 760px
+   content breakpoint below) so section layouts are unaffected. */
+@media (max-width: 1080px) {
   .nav__links { display: none; }
   .nav__burger { display: flex; }
   .btn--nav { display: none; }
@@ -716,6 +720,9 @@ section { position: relative; padding-block: clamp(80px, 12vw, 160px); }
   .nav.is-open .nav__links a { font-family: var(--display); font-size: 32px; color: var(--bone); }
   .nav.is-open .nav__burger i:first-child { transform: translateY(3.5px) rotate(45deg); }
   .nav.is-open .nav__burger i:last-child { transform: translateY(-3.5px) rotate(-45deg); }
+}
+
+@media (max-width: 760px) {
   .ritual__steps, .stats__grid, .shop__grid { grid-template-columns: 1fr; }
   .soon { flex-direction: column; text-align: center; }
   .soon p { margin-inline: auto; }
