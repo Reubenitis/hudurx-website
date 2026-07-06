@@ -356,21 +356,21 @@ section { position: relative; padding-block: clamp(80px, 12vw, 160px); }
   -webkit-background-clip: text;
           background-clip: text;
 
-  animation: ktLoadFill 15.5s infinite;
+  animation: ktLoadFill 14.2s infinite;
 }
 
 @keyframes ktLoadFill {
-  /* HOLD EMPTY (~0.5s) */
+  /* HOLD EMPTY (~0.2s) — outline + gentle spin-up reads under 1s total:
+     readers scroll fast */
   0%      { background-position: 50% 0%; }
   /* FILL (~13s) — steady progress-bar climb: gentle spin-up, then constant
-     speed all the way to a crisp arrival at full. No end-crawl: the old
-     decelerating ease made the text LOOK full for ~8s before the hold, which
-     buried the payoff. Now it only reads as full for the 2s hold itself. */
-  3.23%   { background-position: 50% 0%;   animation-timing-function: cubic-bezier(0.4, 0, 0.8, 0.8); }
-  87.10%  { background-position: 50% 100%; }
-  /* HOLD FULL (~2s) on the solid purple. The animation then loops from 100%
-     straight back to the 0% keyframe — an INSTANT jump full -> empty (no
-     interpolation) — so it snaps back to the outline and re-loads. */
+     speed all the way to a crisp arrival at full. No end-crawl, so the text
+     only reads as full during the hold itself. */
+  1.41%   { background-position: 50% 0%;   animation-timing-function: cubic-bezier(0.4, 0, 0.8, 0.8); }
+  92.96%  { background-position: 50% 100%; }
+  /* HOLD FULL (~1s max) on the solid purple. The animation then loops from
+     100% straight back to the 0% keyframe — an INSTANT jump full -> empty
+     (no interpolation) — so it snaps back to the outline and re-loads. */
   100%    { background-position: 50% 100%; }
 }
 
