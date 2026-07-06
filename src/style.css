@@ -339,12 +339,15 @@ section { position: relative; padding-block: clamp(80px, 12vw, 160px); }
   -webkit-text-fill-color: transparent;
   -webkit-text-stroke: clamp(1.5px, 0.22vw, 3px) var(--acc);
 
-  /* clean purple fill with a soft top edge — no bright/white highlight */
+  /* clean purple fill with a soft top edge — no bright/white highlight.
+     The soft band is centered exactly at the gradient's midpoint so the
+     animated position maps 1:1 to the visible fill level (full means full,
+     empty means empty — no early-looking-full offset). */
   background-image: linear-gradient(
     to top,
     var(--acc) 0%,
-    var(--acc) 49%,
-    transparent 53%,
+    var(--acc) 48%,
+    transparent 52%,
     transparent 100%
   );
   background-size: 100% 200%;   /* 2x tall so it can slide fully through */
@@ -359,10 +362,11 @@ section { position: relative; padding-block: clamp(80px, 12vw, 160px); }
 @keyframes ktLoadFill {
   /* HOLD EMPTY (~0.5s) */
   0%      { background-position: 50% 0%; }
-  /* FILL (~13s) — slow, organic progress-bar climb: eases in, holds a steady
-     pace, then decelerates into a crawl near the top (the "almost there" of a
-     real load bar). */
-  3.23%   { background-position: 50% 0%;   animation-timing-function: cubic-bezier(0.3, 0, 0.15, 1); }
+  /* FILL (~13s) — steady progress-bar climb: gentle spin-up, then constant
+     speed all the way to a crisp arrival at full. No end-crawl: the old
+     decelerating ease made the text LOOK full for ~8s before the hold, which
+     buried the payoff. Now it only reads as full for the 2s hold itself. */
+  3.23%   { background-position: 50% 0%;   animation-timing-function: cubic-bezier(0.4, 0, 0.8, 0.8); }
   87.10%  { background-position: 50% 100%; }
   /* HOLD FULL (~2s) on the solid purple. The animation then loops from 100%
      straight back to the 0% keyframe — an INSTANT jump full -> empty (no
