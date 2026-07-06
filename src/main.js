@@ -364,14 +364,14 @@ const FLAVORS = {
   },
   coco: {
     idx: '02 / 03', title: 'Pineapple Coco-Loco', volt: '200mg',
-    desc: 'Tropical and unhinged. Sweet pineapple crashes into creamy coconut — then the thunder rolls in.',
+    desc: 'Tropical and unhinged. Sweet pineapple crashes into creamy coconut, then the thunder rolls in.',
     notes: ['Sweet pineapple', 'Creamy coconut', 'Tropic thunder'],
     acc: '#ffd002', glow: 'rgba(255,208,2,0.5)',
     img: './img/flavor-pineapple.webp', alt: 'ThunderStix Pineapple Coco-Loco stick pack',
   },
   lime: {
     idx: '03 / 03', title: 'Lime Lazarus', volt: '200mg',
-    desc: 'Back-from-the-dead crisp. Cold, clean lime that resurrects you mid-slump — no water, no mercy.',
+    desc: 'Back-from-the-dead crisp. Cold, clean lime that resurrects you mid-slump. No water, no mercy.',
     notes: ['Crisp lime', 'Ice-cold finish', 'Risen again'],
     acc: '#6eff3d', glow: 'rgba(110,255,61,0.45)',
     img: './img/flavor-lime.webp', alt: 'ThunderStix Lime Lazarus stick pack',
@@ -420,7 +420,7 @@ function showToast(msg) {
 $$('[data-add]').forEach((b) => b.addEventListener('click', () => {
   const card = b.closest('.pcard');
   const name = card?.querySelector('h3')?.textContent || 'ThunderStix';
-  showToast(`⚡ ${name} added — fuel incoming`);
+  showToast(`⚡ ${name} added. Fuel incoming.`);
 }));
 $('#enlistForm')?.addEventListener('submit', (e) => {
   e.preventDefault();
