@@ -356,18 +356,18 @@ section { position: relative; padding-block: clamp(80px, 12vw, 160px); }
   -webkit-background-clip: text;
           background-clip: text;
 
-  animation: ktLoadFill 14.2s infinite;
+  animation: ktLoadFill 11s infinite;
 }
 
 @keyframes ktLoadFill {
   /* HOLD EMPTY (~0.2s) — outline + gentle spin-up reads under 1s total:
      readers scroll fast */
   0%      { background-position: 50% 0%; }
-  /* FILL (~13s) — steady progress-bar climb: gentle spin-up, then constant
+  /* FILL (~9.8s) — steady progress-bar climb: gentle spin-up, then constant
      speed all the way to a crisp arrival at full. No end-crawl, so the text
      only reads as full during the hold itself. */
-  1.41%   { background-position: 50% 0%;   animation-timing-function: cubic-bezier(0.4, 0, 0.8, 0.8); }
-  92.96%  { background-position: 50% 100%; }
+  1.82%   { background-position: 50% 0%;   animation-timing-function: cubic-bezier(0.4, 0, 0.8, 0.8); }
+  90.91%  { background-position: 50% 100%; }
   /* HOLD FULL (~1s max) on the solid purple. The animation then loops from
      100% straight back to the 0% keyframe — an INSTANT jump full -> empty
      (no interpolation) — so it snaps back to the outline and re-loads. */
