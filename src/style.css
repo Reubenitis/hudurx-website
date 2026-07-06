@@ -837,7 +837,8 @@ section { position: relative; padding-block: clamp(80px, 12vw, 160px); }
 @media (max-width: 760px) {
   .ritual__steps, .stats__grid, .shop__grid { grid-template-columns: 1fr; }
   .rstep { text-align: center; }
-  .rstep__icon { margin-inline: auto; }
+  /* 2.5x the 84px desktop size — the icons carry the stacked mobile cards */
+  .rstep__icon { margin-inline: auto; width: 210px; height: 210px; }
   .rstep p { margin-inline: auto; }
   .soon { flex-direction: column; text-align: center; }
   .soon p { margin-inline: auto; }
