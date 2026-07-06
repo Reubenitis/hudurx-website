@@ -839,6 +839,9 @@ section { position: relative; padding-block: clamp(80px, 12vw, 160px); }
   .rstep { text-align: center; }
   /* 2.5x the 84px desktop size — the icons carry the stacked mobile cards */
   .rstep__icon { margin-inline: auto; width: 210px; height: 210px; }
+  /* size purely by viewport so the nowrap line always fits the phone width
+     (the 54px clamp floor was wider than the screen and got clipped) */
+  .footer__big { font-size: 13.6vw; padding: 30px 0 8px; }
   .rstep p { margin-inline: auto; }
   .soon { flex-direction: column; text-align: center; }
   .soon p { margin-inline: auto; }
