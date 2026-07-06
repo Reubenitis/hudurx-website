@@ -841,6 +841,8 @@ section { position: relative; padding-block: clamp(80px, 12vw, 160px); }
   .rstep p { margin-inline: auto; }
   .soon { flex-direction: column; text-align: center; }
   .soon p { margin-inline: auto; }
+  /* the tubs are the hero of this teaser on mobile — ~3.5x the desktop clamp */
+  .soon img { width: min(300px, 78vw); }
   .stat::after { display: none; }
   .versus { grid-template-columns: 1fr; }
   .versus__vs { margin: 0 auto; }
