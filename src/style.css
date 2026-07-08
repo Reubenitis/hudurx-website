@@ -836,6 +836,9 @@ section { position: relative; padding-block: clamp(80px, 12vw, 160px); }
 
 @media (max-width: 760px) {
   .ritual__steps, .stats__grid, .shop__grid { grid-template-columns: 1fr; }
+  /* nav logo 15% smaller on phones, both resting and scrolled states */
+  .nav__logo .brand-logo { height: 77.4px; }
+  .nav.is-stuck .nav__logo .brand-logo { height: 61.9px; }
   .rstep { text-align: center; }
   /* 2.5x the 84px desktop size — the icons carry the stacked mobile cards */
   .rstep__icon { margin-inline: auto; width: 210px; height: 210px; }
