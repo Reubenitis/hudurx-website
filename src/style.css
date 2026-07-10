@@ -460,6 +460,17 @@ section { position: relative; padding-block: clamp(80px, 12vw, 160px); }
 .rstep h3 { font-family: var(--display); font-size: clamp(30px, 4vw, 46px); text-transform: uppercase; margin-bottom: 12px; }
 .rstep p { color: var(--muted); font-size: 15px; max-width: 34ch; }
 
+/* caffeine safety note under the ritual steps — same muted body copy */
+.ritual__note {
+  max-width: 720px; margin: clamp(44px, 6vw, 72px) auto 0; padding-inline: var(--gut);
+  text-align: center;
+}
+.ritual__note p { color: var(--muted); font-size: 15px; line-height: 1.65; }
+.ritual__note p + p { margin-top: 16px; }
+.ritual__note p.ritual__note-lead { color: var(--bone); }
+.ritual__note a { color: var(--acc); text-decoration: underline; text-underline-offset: 2px; transition: color 0.25s; }
+.ritual__note a:hover { color: var(--green); }
+
 /* =========================================================
    FLAVORS  (accent driven by JS .style --acc on section)
    ========================================================= */
