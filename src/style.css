@@ -712,9 +712,21 @@ section { position: relative; padding-block: clamp(80px, 12vw, 160px); }
 .army__inner { max-width: var(--maxw); margin: 0 auto; padding-inline: var(--gut); text-align: center; }
 .army__title { font-family: var(--display); text-transform: uppercase; font-size: clamp(44px, 8vw, 116px); line-height: 0.92; }
 .army__title em { font-style: normal; color: var(--acc); }
-.army__stats { display: flex; justify-content: center; gap: clamp(30px, 7vw, 90px); margin: 50px 0 60px; flex-wrap: wrap; }
-.army__stats b { font-family: var(--display); font-size: clamp(40px, 6vw, 72px); color: var(--green); display: block; line-height: 1; }
-.army__stats span { font-family: var(--mono); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.army__lead { max-width: 640px; margin: 28px auto 0; }
+.army__lead-hook { font-family: var(--display); text-transform: uppercase; font-size: clamp(20px, 2.6vw, 30px); line-height: 1.06; color: var(--bone); margin-bottom: 18px; }
+.army__lead p:not(.army__lead-hook) { color: var(--muted); font-size: clamp(15px, 1.7vw, 17px); line-height: 1.6; }
+.army__perks {
+  list-style: none; display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
+  max-width: 900px; margin: 44px auto 60px;
+}
+.army__perks li {
+  display: flex; align-items: center; gap: 10px; text-align: left;
+  padding: 16px 18px; border: 1px solid var(--hair); border-radius: 10px; background: var(--void);
+  font-family: var(--mono); font-size: 13px; letter-spacing: 0.03em; text-transform: uppercase; color: var(--bone);
+  transition: border-color 0.25s, transform 0.25s var(--ease);
+}
+.army__perks li:hover { border-color: var(--acc); transform: translateY(-3px); }
+.army__perks li span { color: var(--acc); }
 .army__quotes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; text-align: left; }
 .army__quotes blockquote {
   border: 1px solid var(--hair); border-radius: 10px; padding: 28px; font-size: 16px; line-height: 1.5; background: var(--void);
@@ -832,6 +844,7 @@ section { position: relative; padding-block: clamp(80px, 12vw, 160px); }
      the 1:1 stage collapses. */
   .flavors__display { width: 100%; max-width: 460px; margin: 0 auto; }
   .army__quotes { grid-template-columns: 1fr; }
+  .army__perks { grid-template-columns: 1fr 1fr; }
   .footer__cols { grid-template-columns: 1fr 1fr; }
 }
 /* Collapse the nav to the hamburger BEFORE the links would wrap onto a second
