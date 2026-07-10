@@ -286,7 +286,7 @@ section { position: relative; padding-block: clamp(80px, 12vw, 160px); }
 .hero__stats { display: flex; gap: clamp(24px, 5vw, 64px); margin-top: 54px; list-style: none; flex-wrap: wrap; }
 .hero__stats li { display: flex; flex-direction: column; }
 .hero__stats b { font-family: var(--display); font-size: clamp(34px, 5vw, 56px); line-height: 1; color: var(--bone); }
-.hero__stats b i { font-style: normal; color: var(--acc); font-size: 0.6em; }
+.hero__stats b i { font-style: normal; color: var(--bone); font-size: 0.6em; }
 .hero__stats span { font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-top: 8px; }
 
 .hero__scroll { position: absolute; bottom: 26px; left: 50%; transform: translateX(-50%); z-index: 3; display: flex; flex-direction: column; align-items: center; gap: 10px; }
