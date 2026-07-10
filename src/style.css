@@ -317,6 +317,10 @@ section { position: relative; padding-block: clamp(80px, 12vw, 160px); }
 .manifesto__kicker { font-family: var(--mono); font-size: 13px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--acc); margin-bottom: 28px; }
 .manifesto__text { font-family: var(--display); text-transform: uppercase; font-weight: 400; line-height: 0.98; font-size: clamp(40px, 7vw, 104px); }
 .manifesto__text span { display: block; }
+/* section titles are uppercase by transform — .zzz opts a word out so the
+   lowercase z's in "Fight the Zzz" render literally */
+.section-title .zzz { text-transform: none; }
+
 .manifesto__text em { font-style: normal; color: var(--acc); }
 .manifesto__text [data-reveal] { display: block; }
 
