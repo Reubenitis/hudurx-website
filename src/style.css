@@ -1,5 +1,5 @@
 /* =========================================================
-   HUDU℞ — ThunderStix  ·  Fuel The Thunder
+   HUDU RX — ThunderStix  ·  Fuel The Thunder
    Design system + immersive single-page styling
    ========================================================= */
 
@@ -544,7 +544,7 @@ section { position: relative; padding-block: clamp(80px, 12vw, 160px); }
   margin-top: 36px; border: 1px solid var(--hair); border-radius: 8px; padding: 24px 26px;
   background: linear-gradient(160deg, rgba(176,38,255,0.08), transparent 60%); max-width: 440px; position: relative;
 }
-.hudu__rx::before { content: "℞"; position: absolute; top: -18px; right: 18px; font-family: var(--display); font-size: 60px; color: var(--green); opacity: 0.18; }
+.hudu__rx::before { content: "⚡"; position: absolute; top: -18px; right: 18px; font-family: var(--display); font-size: 60px; color: var(--green); opacity: 0.18; }
 .hudu__rx-head { font-family: var(--mono); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--green); margin-bottom: 16px; }
 .hudu__rx-line { display: flex; justify-content: space-between; gap: 16px; padding: 9px 0; border-bottom: 1px dashed var(--hair); font-size: 14px; }
 .hudu__rx-line span { font-family: var(--mono); color: var(--muted); text-transform: uppercase; font-size: 11px; letter-spacing: 0.08em; }
