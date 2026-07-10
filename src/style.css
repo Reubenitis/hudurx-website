@@ -763,17 +763,6 @@ section { position: relative; padding-block: clamp(80px, 12vw, 160px); }
 .pcard__save { font-family: var(--mono); font-size: 12px; color: var(--green); margin-top: 6px; }
 .pcard .btn--card { margin-top: auto; }
 
-/* Coming-soon teaser (ThunderScoops tubs) */
-.soon {
-  max-width: var(--maxw); margin: clamp(28px, 4vw, 44px) auto 0; padding: 22px clamp(20px, 3vw, 34px);
-  margin-inline: auto; width: calc(100% - var(--gut) * 2);
-  display: flex; align-items: center; gap: clamp(18px, 3vw, 30px);
-  border: 1px dashed var(--hair); border-radius: 14px; background: var(--void-2);
-}
-.soon img { width: clamp(84px, 12vw, 128px); height: auto; flex: none; filter: drop-shadow(0 12px 24px rgba(0,0,0,0.5)); }
-.soon__tag { font-family: var(--mono); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--gold); }
-.soon h3 { font-family: var(--display); font-size: clamp(22px, 3vw, 30px); text-transform: uppercase; margin: 6px 0 8px; }
-.soon p { color: var(--muted); font-size: 15px; max-width: 52ch; }
 .shop__retail {
   max-width: var(--maxw); margin: clamp(20px, 2.6vw, 30px) auto 0; padding-inline: var(--gut); text-align: center;
   font-family: var(--mono); font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted);
@@ -881,10 +870,6 @@ section { position: relative; padding-block: clamp(80px, 12vw, 160px); }
      (the 54px clamp floor was wider than the screen and got clipped) */
   .footer__big { font-size: 13.6vw; padding: 30px 0 8px; }
   .rstep p { margin-inline: auto; }
-  .soon { flex-direction: column; text-align: center; }
-  .soon p { margin-inline: auto; }
-  /* the tubs are the hero of this teaser on mobile — ~3.5x the desktop clamp */
-  .soon img { width: min(300px, 78vw); }
   .stat::after { display: none; }
   .versus { grid-template-columns: 1fr; }
   .versus__vs { margin: 0 auto; }
