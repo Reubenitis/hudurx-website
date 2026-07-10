@@ -356,21 +356,21 @@ function bolts() {
    ========================================================= */
 const FLAVORS = {
   grape: {
-    idx: '01 / 03', title: 'Grape Gambit', volt: '200mg',
+    idx: '01 / 03', title: 'Grape Gambit', volt: '200 mg',
     desc: 'Dark, electric and a little bit cursed. Deep grape with a tart violet snap that hits like a power chord.',
     notes: ['Black grape', 'Tart snap', 'Purple haze'],
     acc: '#b026ff', glow: 'rgba(176,38,255,0.55)',
     img: './img/flavor-grape.webp', alt: 'ThunderStix Grape Gambit stick pack',
   },
   coco: {
-    idx: '02 / 03', title: 'Pineapple Coco-Loco', volt: '200mg',
+    idx: '02 / 03', title: 'Pineapple Coco-Loco', volt: '200 mg',
     desc: 'Tropical and unhinged. Sweet pineapple crashes into creamy coconut, then the thunder rolls in.',
     notes: ['Sweet pineapple', 'Creamy coconut', 'Tropic thunder'],
     acc: '#ffd002', glow: 'rgba(255,208,2,0.5)',
     img: './img/flavor-pineapple.webp', alt: 'ThunderStix Pineapple Coco-Loco stick pack',
   },
   lime: {
-    idx: '03 / 03', title: 'Lime Lazarus', volt: '200mg',
+    idx: '03 / 03', title: 'Lime Lazarus', volt: '200 mg',
     desc: 'Back-from-the-dead crisp. Cold, clean lime that resurrects you mid-slump. No water, no mercy.',
     notes: ['Crisp lime', 'Ice-cold finish', 'Risen again'],
     acc: '#6eff3d', glow: 'rgba(110,255,61,0.45)',
