@@ -761,6 +761,7 @@ section { position: relative; padding-block: clamp(80px, 12vw, 160px); }
 .pcard__price b { font-family: var(--display); font-size: 56px; line-height: 1; color: var(--bone); }
 .pcard__price span { font-family: var(--mono); font-size: 13px; color: var(--muted); }
 .pcard__save { font-family: var(--mono); font-size: 12px; color: var(--green); margin-top: 6px; }
+.pcard__unit { font-family: var(--mono); font-size: 12px; color: var(--muted); margin-top: 6px; }
 .pcard .btn--card { margin-top: auto; }
 
 .shop__retail {
