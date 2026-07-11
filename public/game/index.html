@@ -342,6 +342,30 @@ function drawSticks(){
     cx.beginPath(); cx.arc(b.x + d.nx*d.mag*STICK_R, b.y + d.ny*d.mag*STICK_R, 27, 0, 6.2832); cx.fill();
     cx.restore();
   }
+  drawStickHints();
+}
+/* gold MOVE / FIRE cues that flash over the two sticks for the first
+   few seconds of a run, so touch players grasp the controls instantly */
+function drawStickHints(){
+  const DUR = 5;                                   // total seconds visible
+  if(elapsed >= DUR) return;
+  let a = 1;
+  if(elapsed < 0.25) a = elapsed/0.25;             // fade in
+  else if(elapsed > DUR-1.2) a = (DUR-elapsed)/1.2; // fade out
+  const flash = 0.4 + 0.6*(0.5 + 0.5*Math.sin(elapsed*9)); // attention pulse
+  cx.save();
+  cx.textAlign='center'; cx.textBaseline='middle'; cx.lineJoin='round';
+  cx.font = '900 26px "Archivo Black", sans-serif';
+  for(const [side,label] of [['L','MOVE'],['R','FIRE']]){
+    const b = stickBase(side), y = b.y - STICK_R - 26;
+    cx.globalAlpha = a;
+    cx.lineWidth = 6; cx.strokeStyle = 'rgba(23,20,28,0.85)';
+    cx.strokeText(label, b.x, y);
+    cx.globalAlpha = a*flash;
+    cx.fillStyle = C.gold;
+    cx.fillText(label, b.x, y);
+  }
+  cx.restore();
 }
 cv.addEventListener('pointerdown', e=>{
   const p = canvasPos(e);
