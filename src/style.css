@@ -287,6 +287,8 @@ section { position: relative; padding-block: clamp(80px, 12vw, 160px); }
 }
 .hero__title .char { display: inline-block; will-change: transform; text-shadow: 0 2px 44px rgba(0, 0, 0, 0.6), 0 1px 3px rgba(0, 0, 0, 0.5); }
 .hero__title .word--thunder .char { text-shadow: none; }
+/* solid, always-visible headline — no background-clip:text (fails on Safari) */
+.hero__title .word--go { color: var(--bone); filter: drop-shadow(0 3px 14px rgba(0, 0, 0, 0.65)); }
 
 .hero__lead { max-width: 540px; margin-top: 26px; font-size: clamp(16px, 1.9vw, 20px); color: rgba(236,230,245,0.82); }
 .hero__lead strong { color: var(--green); font-weight: 600; }
